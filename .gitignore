@@ -10,3 +10,6 @@ desktop.ini
 # Local backups or logs
 *.bak
 *.log
+
+# Supabase local config (not committed to avoid leaking local credentials in public repos)
+supabase-config.js

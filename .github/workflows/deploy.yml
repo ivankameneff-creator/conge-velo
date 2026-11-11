@@ -1,0 +1,52 @@
+name: Deploy to GitHub Pages with Supabase Config
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+# Permissions minimales requises pour déployer sur GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout du dépôt
+        uses: actions/checkout@v4
+
+      - name: Injecter la configuration Supabase depuis les variables/secrets GitHub
+        run: |
+          SUPABASE_URL="${{ vars.SUPABASE_URL || secrets.SUPABASE_URL }}"
+          SUPABASE_KEY="${{ vars.SUPABASE_ANON_KEY || secrets.SUPABASE_ANON_KEY }}"
+
+          echo "Génération de supabase-config.js..."
+          cat <<EOF > supabase-config.js
+          // Fichier généré automatiquement par le workflow GitHub Actions
+          window.ZENLEAVE_SUPABASE_CONFIG = {
+            url: "${SUPABASE_URL}",
+            anonKey: "${SUPABASE_KEY}"
+          };
+          EOF
+
+      - name: Configurer GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Téléverser l'artefact pour GitHub Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+      - name: Déployer sur GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

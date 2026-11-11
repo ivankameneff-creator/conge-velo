@@ -45,16 +45,30 @@ L'application intègre une architecture **hybride Cloud / Offline-First** :
 - **Sans configuration** : fonctionne instantanément en local avec le `localStorage` de votre navigateur.
 - **Avec Supabase** : synchronisation temps réel de vos congés et trajets vélo dans une vraie base de données **PostgreSQL hébergée**, accessible depuis votre PC, smartphone ou tablette.
 
-### Configuration en 2 minutes :
-1. Créez un projet gratuit sur [Supabase.com](https://supabase.com).
-2. Rendez-vous dans le menu **SQL Editor > New Query**, collez le contenu du fichier [`schema.sql`](file:///d:/Dev/IA/vacances/schema.sql) et cliquez sur **Run**.
-3. Dans ZenLeave, cliquez sur le bouton **« Cloud DB »** dans la barre du haut :
-   - Renseignez l'**URL du projet** (`https://xyz.supabase.co`).
-   - Renseignez la **clé API publique (`anon key`)**.
-   - Cliquez sur **« Tester & Enregistrer »**.
-4. Vos soldes et journées sont désormais automatiquement synchronisés dans les tables PostgreSQL `zenleave_config` et `zenleave_days` !
+---
+
+## 🐙 Connexion Automatique via Variables GitHub (GitHub Actions & Pages)
+
+Vous pouvez configurer vos identifiants Supabase directement dans les **Variables ou Secrets de votre dépôt GitHub**. Le workflow GitHub Actions ([`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)) injecte automatiquement ces clés lors du déploiement de l'application sur **GitHub Pages** !
+
+### 1. Ajouter les Variables sur GitHub :
+1. Rendez-vous sur votre dépôt GitHub : **`https://github.com/ivankameneff-creator/conge-velo`**
+2. Cliquez sur l'onglet **Settings** (Paramètres du dépôt).
+3. Dans le menu de gauche, allez dans **Secrets and variables** > **Actions**.
+4. Cliquez sur l'onglet **Variables** (ou **Secrets**) puis sur **« New repository variable »** (ou Secret) :
+   - **Nom** : `SUPABASE_URL`
+   - **Valeur** : l'URL de votre projet Supabase (ex: `https://votre-projet.supabase.co`)
+5. Cliquez à nouveau sur **« New repository variable »** :
+   - **Nom** : `SUPABASE_ANON_KEY`
+   - **Valeur** : votre clé API publique `anon` (disponible dans Supabase > *Project Settings > API > anon / public*)
+
+### 2. Activer GitHub Pages :
+1. Dans **Settings** > **Pages** de votre dépôt GitHub.
+2. Dans la section **Build and deployment > Source**, sélectionnez **« GitHub Actions »**.
+3. À chaque `git push`, le site est automatiquement mis à jour et déployé avec la connexion Supabase active d'office, sans que vous ayez à ressaisir quoi que ce soit dans le navigateur !
 
 ---
 
-## 🚀 Lancement
-Double-cliquez sur `index.html` pour ouvrir l'application dans votre navigateur !
+## 🚀 Lancement en local
+- Double-cliquez sur `index.html` pour ouvrir l'application dans votre navigateur.
+- Pour tester la connexion Supabase en local sans GitHub Actions, vous pouvez copier [`supabase-config.sample.js`](supabase-config.sample.js) vers `supabase-config.js` et y renseigner vos identifiants.

@@ -59,6 +59,9 @@
   <!-- Supabase JS Client (PostgreSQL Cloud DB) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+  <!-- Supabase Credentials (auto-injecté via GitHub Actions / GitHub Variables ou supabase-config.js) -->
+  <script src="supabase-config.js" onerror="/* Optionnel en local */"></script>
+
   <style>
     /* Neo-Brutalist base styles */
     body {
@@ -925,7 +928,7 @@
       </div>
 
       <!-- Connection Status Banner -->
-      <div id="dbStatusBanner" class="p-3.5 rounded-xl border-2 border-pop-dark mb-4 bg-pop-gray flex items-center justify-between">
+      <div id="dbStatusBanner" class="p-3.5 rounded-xl border-2 border-pop-dark mb-3 bg-pop-gray flex items-center justify-between">
         <div class="flex items-center gap-2.5">
           <span id="dbBannerDot" class="w-3.5 h-3.5 rounded-full bg-slate-400 inline-block"></span>
           <div>
@@ -934,6 +937,20 @@
           </div>
         </div>
         <span id="dbBannerBadge" class="sticker-badge bg-pop-yellow text-[10px]">HORS CLOUD</span>
+      </div>
+
+      <!-- GitHub Variables Notice Banner -->
+      <div id="dbGithubConfigNotice" class="hidden p-3 rounded-xl border-2 border-pop-dark mb-4 bg-sky-100 flex items-center justify-between text-xs shadow-brutal-sm">
+        <div class="flex items-center gap-2">
+          <span class="text-base">🐙</span>
+          <div>
+            <div class="font-black text-slate-900">Variables GitHub détectées</div>
+            <div class="text-[10px] text-slate-700">Identifiants configurés via GitHub Actions (SUPABASE_URL & ANON_KEY).</div>
+          </div>
+        </div>
+        <button type="button" onclick="resetToGitHubConfig()" class="text-[10px] font-black underline bg-white px-2 py-1 rounded border border-pop-dark hover:bg-sky-50 cursor-pointer">
+          Recharger GitHub
+        </button>
       </div>
 
       <!-- Database Config Form -->
@@ -1203,19 +1220,73 @@ CREATE POLICY "zenleave_days_all" ON public.zenleave_days FOR ALL USING (true);<
     let isDbConnected = false;
 
     function getSavedDatabaseConfig() {
+      const gitHubCfg = window.ZENLEAVE_SUPABASE_CONFIG || {};
+      let localCfg = null;
       try {
         const raw = localStorage.getItem(DB_STORAGE_CONFIG_KEY);
-        return raw ? JSON.parse(raw) : { url: '', anonKey: '' };
-      } catch (e) {
-        return { url: '', anonKey: '' };
+        if (raw) localCfg = JSON.parse(raw);
+      } catch (e) {}
+
+      // Si l'utilisateur s'est explicitement déconnecté en local
+      if (localCfg && localCfg.disabled) {
+        return { 
+          url: '', 
+          anonKey: '', 
+          isFromGitHub: false, 
+          hasGitHubAvailable: Boolean(gitHubCfg.url && gitHubCfg.anonKey),
+          disabled: true 
+        };
       }
+
+      // Si l'utilisateur a saisi une configuration manuelle
+      if (localCfg && (localCfg.url || localCfg.anonKey)) {
+        return { 
+          url: localCfg.url || '', 
+          anonKey: localCfg.anonKey || '', 
+          isFromGitHub: false,
+          hasGitHubAvailable: Boolean(gitHubCfg.url && gitHubCfg.anonKey),
+          disabled: false
+        };
+      }
+
+      // Sinon, on utilise la configuration GitHub (Variables / Secrets)
+      if (gitHubCfg.url && gitHubCfg.anonKey) {
+        return { 
+          url: gitHubCfg.url, 
+          anonKey: gitHubCfg.anonKey, 
+          isFromGitHub: true, 
+          hasGitHubAvailable: true,
+          disabled: false 
+        };
+      }
+
+      return { url: '', anonKey: '', isFromGitHub: false, hasGitHubAvailable: false, disabled: false };
     }
 
     function openDatabaseModal() {
       const cfg = getSavedDatabaseConfig();
       document.getElementById('dbSupabaseUrl').value = cfg.url || '';
       document.getElementById('dbSupabaseAnonKey').value = cfg.anonKey || '';
+
+      const githubNotice = document.getElementById('dbGithubConfigNotice');
+      if (githubNotice) {
+        if (cfg.hasGitHubAvailable) {
+          githubNotice.classList.remove('hidden');
+        } else {
+          githubNotice.classList.add('hidden');
+        }
+      }
+
       document.getElementById('modalDatabase').classList.remove('hidden');
+    }
+
+    function resetToGitHubConfig() {
+      localStorage.removeItem(DB_STORAGE_CONFIG_KEY);
+      const cfg = getSavedDatabaseConfig();
+      document.getElementById('dbSupabaseUrl').value = cfg.url || '';
+      document.getElementById('dbSupabaseAnonKey').value = cfg.anonKey || '';
+      showToast('Configuration réinitialisée avec les variables GitHub');
+      initDatabaseConnection(true);
     }
 
     function closeDatabaseModal() {
@@ -1362,7 +1433,7 @@ CREATE POLICY "zenleave_days_all" ON public.zenleave_days FOR ALL USING (true);<
     }
 
     function disconnectDatabase() {
-      localStorage.removeItem(DB_STORAGE_CONFIG_KEY);
+      localStorage.setItem(DB_STORAGE_CONFIG_KEY, JSON.stringify({ disabled: true, url: '', anonKey: '' }));
       isDbConnected = false;
       supabaseClient = null;
       document.getElementById('dbSupabaseUrl').value = '';
