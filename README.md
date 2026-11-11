@@ -51,16 +51,26 @@ L'application intègre une architecture **hybride Cloud / Offline-First** :
 
 Vous pouvez configurer vos identifiants Supabase directement dans les **Variables ou Secrets de votre dépôt GitHub**. Le workflow GitHub Actions ([`.github/workflows/deploy.yml`](.github/workflows/deploy.yml)) injecte automatiquement ces clés lors du déploiement de l'application sur **GitHub Pages** !
 
-### 1. Ajouter les Variables sur GitHub :
+### 1. Ajouter les Variables et Secrets sur GitHub :
 1. Rendez-vous sur votre dépôt GitHub : **`https://github.com/ivankameneff-creator/conge-velo`**
 2. Cliquez sur l'onglet **Settings** (Paramètres du dépôt).
 3. Dans le menu de gauche, allez dans **Secrets and variables** > **Actions**.
-4. Cliquez sur l'onglet **Variables** (ou **Secrets**) puis sur **« New repository variable »** (ou Secret) :
-   - **Nom** : `SUPABASE_URL`
-   - **Valeur** : l'URL de votre projet Supabase (ex: `https://votre-projet.supabase.co`)
-5. Cliquez à nouveau sur **« New repository variable »** :
-   - **Nom** : `SUPABASE_ANON_KEY`
-   - **Valeur** : votre clé API publique `anon` (disponible dans Supabase > *Project Settings > API > anon / public*)
+4. Dans l'onglet **Variables** (ou **Secrets**), ajoutez :
+   - **`SUPABASE_URL`** : l'URL de votre projet Supabase (ex: `https://votre-projet.supabase.co`)
+   - **`SUPABASE_ANON_KEY`** : votre clé API publique `anon` (disponible dans Supabase > *Project Settings > API > anon / public*)
+5. Dans l'onglet **Secrets**, ajoutez :
+   - **`APP_PASSWORD`** : votre mot de passe secret pour déverrouiller l'accès au site et à la BDD.
+
+---
+
+## 🔐 Protection par Mot de Passe sur Dépôt Public
+
+Même avec un dépôt **Public** et un site GitHub Pages accessible publiquement :
+- **Écran de verrouillage automatique** : toute personne ouvrant le site fait face à un écran de verrouillage demandant le mot de passe.
+- **Données masquées** : aucun calendrier, solde, nom ou trajet vélo n'est affiché sans le mot de passe.
+- **Mémorisation de l'appareil** : cochez *« Mémoriser sur cet appareil »* pour ne pas avoir à retaper le mot de passe à chaque visite sur votre ordinateur ou smartphone personnel.
+- **Bouton Verrouiller** : un bouton `Verrouiller` dans la barre du haut permet de reverrouiller l'accès en 1 clic.
+- **Gestion dans l'application** : vous pouvez aussi définir, modifier ou retirer le mot de passe à tout moment depuis la modale **Base de données ☁️ > Mot de Passe d'Accès BDD**.
 
 ### 2. Activer GitHub Pages :
 1. Dans **Settings** > **Pages** de votre dépôt GitHub.

@@ -164,7 +164,7 @@
   <!-- Heatmap Floating Tooltip -->
   <div id="heatmapTooltip" class="fixed hidden z-50 bg-pop-dark text-white px-3 py-1.5 border-2 border-pop-yellow shadow-brutal text-xs font-mono rounded"></div>
 
-  <div class="max-w-7xl mx-auto space-y-6">
+  <div id="mainAppContainer" class="max-w-7xl mx-auto space-y-6 transition duration-200">
 
     <!-- ========================================================================= -->
     <!-- 1. TOP HEADER & NEO-BRUTALIST TICKER                                      -->
@@ -231,6 +231,12 @@
           <button onclick="toggleQuickPaintBar()" id="btnQuickPaintTrigger" class="brutal-btn bg-pop-yellow px-3 py-2 rounded-xl text-xs flex items-center gap-1.5 text-pop-dark">
             <i data-lucide="brush" class="w-4 h-4"></i>
             <span class="hidden sm:inline">Pinceau Rapide</span>
+          </button>
+
+          <!-- Security Lock Button -->
+          <button onclick="lockApplication()" id="btnLockApp" class="hidden brutal-btn bg-pop-pink px-3 py-2 rounded-xl text-xs flex items-center gap-1.5 text-white" title="Verrouiller l'accès au tableau de bord">
+            <i data-lucide="lock" class="w-4 h-4"></i>
+            <span class="hidden sm:inline">Verrouiller</span>
           </button>
 
         </div>
@@ -1004,6 +1010,42 @@
         </div>
       </form>
 
+      <!-- Access Password & Security Box -->
+      <div class="mt-4 pt-3 border-t-2 border-pop-dark">
+        <div class="p-3.5 rounded-xl border-2 border-pop-dark bg-amber-50 space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="text-xl">🔐</span>
+              <div>
+                <div class="font-black text-xs text-slate-900">Mot de Passe d'Accès BDD</div>
+                <div class="text-[10px] text-slate-600 font-semibold">Protège vos congés des regards extérieurs sur votre site public.</div>
+              </div>
+            </div>
+            <span id="pwdStatusBadge" class="sticker-badge bg-pop-gray text-slate-700 text-[10px]">NON DÉFINI</span>
+          </div>
+
+          <div class="space-y-2 pt-1 border-t border-slate-300">
+            <div>
+              <label class="block font-black text-[11px] text-slate-800 mb-1">Définir ou modifier le mot de passe :</label>
+              <div class="relative">
+                <input type="password" id="cfgNewPassword" placeholder="Entrez un mot de passe..." class="w-full bg-white border-2 border-pop-dark p-2 pr-12 text-xs font-mono font-bold shadow-brutal-sm rounded-lg" autocomplete="new-password">
+                <button type="button" onclick="togglePasswordVisibility('cfgNewPassword')" class="absolute right-2 top-2 text-[10px] font-bold text-slate-600 hover:text-pop-dark underline">Voir</button>
+              </div>
+            </div>
+            <div class="flex flex-wrap gap-2 pt-1">
+              <button type="button" onclick="saveAccessPassword()" class="brutal-btn bg-pop-yellow px-3 py-1.5 rounded-lg text-xs font-black flex items-center gap-1.5 text-pop-dark">
+                <i data-lucide="key" class="w-3.5 h-3.5"></i>
+                <span>Enregistrer le mot de passe</span>
+              </button>
+              <button type="button" id="btnRemovePassword" onclick="removeAccessPassword()" class="hidden brutal-btn bg-rose-200 px-3 py-1.5 rounded-lg text-xs font-bold text-rose-900 flex items-center gap-1.5 hover:bg-rose-300">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                <span>Retirer</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- SQL Schema Collapsible Helper -->
       <div class="mt-4 pt-3 border-t-2 border-pop-dark">
         <details class="text-xs group">
@@ -1051,6 +1093,48 @@ CREATE POLICY "zenleave_days_all" ON public.zenleave_days FOR ALL USING (true);<
         </details>
       </div>
 
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: ÉCRAN DE VERROUILLAGE / MOT DE PASSE BDD                          -->
+  <!-- ========================================================================= -->
+  <div id="lockScreenModal" class="fixed inset-0 z-[100] hidden flex items-center justify-center p-4 bg-pop-cream/95 backdrop-blur-md">
+    <div class="bg-pop-cream brutal-box-lg rounded-2xl p-6 sm:p-8 max-w-md w-full border-4 border-pop-dark space-y-5 animate-in fade-in zoom-in-95">
+      <div class="text-center space-y-2">
+        <div class="w-16 h-16 bg-pop-pink brutal-box mx-auto flex items-center justify-center text-3xl -rotate-3 text-white">
+          🔒
+        </div>
+        <h2 class="text-2xl font-black uppercase tracking-tight">Accès Sécurisé</h2>
+        <p class="text-xs text-slate-600 font-bold">
+          Ce tableau de bord et la base de données sont protégés. Saisissez votre mot de passe pour déverrouiller.
+        </p>
+      </div>
+
+      <form id="formLockScreen" onsubmit="handleUnlockSubmit(event)" class="space-y-4">
+        <div>
+          <label class="block font-black text-slate-800 text-xs mb-1">Mot de passe</label>
+          <div class="relative">
+            <input type="password" id="unlockPasswordInput" placeholder="Entrez le mot de passe..." class="w-full bg-white border-2 border-pop-dark p-3 pr-12 text-sm font-bold shadow-brutal-sm rounded-xl focus:outline-none focus:ring-2 focus:ring-pop-yellow" autocomplete="current-password">
+            <button type="button" onclick="togglePasswordVisibility('unlockPasswordInput')" class="absolute right-3 top-3 text-xs font-bold text-slate-600 hover:text-pop-dark underline">
+              👁️
+            </button>
+          </div>
+          <p id="unlockErrorMsg" class="hidden text-xs font-black text-rose-600 mt-2 bg-rose-100 p-2 border-2 border-rose-400 rounded-lg"></p>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <input type="checkbox" id="rememberDeviceCheck" class="w-4 h-4 border-2 border-pop-dark rounded accent-pop-yellow cursor-pointer" checked>
+          <label for="rememberDeviceCheck" class="text-xs font-bold text-slate-700 cursor-pointer">
+            Mémoriser sur cet appareil (rester connecté)
+          </label>
+        </div>
+
+        <button type="submit" id="btnUnlockSubmit" class="w-full brutal-btn bg-emerald-400 p-3 rounded-xl font-black text-sm flex items-center justify-center gap-2 shadow-brutal hover:bg-emerald-300">
+          <i data-lucide="unlock" class="w-4 h-4"></i>
+          <span>Déverrouiller l'accès</span>
+        </button>
+      </form>
     </div>
   </div>
 
@@ -1186,6 +1270,9 @@ CREATE POLICY "zenleave_days_all" ON public.zenleave_days FOR ALL USING (true);<
 
       // Initialiser la connexion Supabase PostgreSQL si configurée
       await initDatabaseConnection();
+
+      // Vérifier et appliquer la protection par mot de passe
+      checkAndEnforceSecurity();
     }
 
     function seedSampleData() {
@@ -1211,6 +1298,170 @@ CREATE POLICY "zenleave_days_all" ON public.zenleave_days FOR ALL USING (true);<
         } else {
           syncPreferencesToCloud();
         }
+      }
+    }
+
+    // --- SÉCURITÉ ET MOT DE PASSE D'ACCÈS ---
+    const AUTH_STORAGE_KEY = 'zenleave_unlocked_token_v1';
+    const LOCAL_PWD_HASH_KEY = 'zenleave_pwd_hash_v1';
+
+    async function computeSha256(text) {
+      if (!text) return '';
+      const msgUint8 = new TextEncoder().encode(text.trim());
+      const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    function getRequiredPasswordHash() {
+      // 1. Configuré via GitHub Actions (Variable/Secret APP_PASSWORD)
+      if (window.ZENLEAVE_SUPABASE_CONFIG && window.ZENLEAVE_SUPABASE_CONFIG.authHash) {
+        return window.ZENLEAVE_SUPABASE_CONFIG.authHash;
+      }
+      // 2. Configuré dans les préférences (synchronisées avec Supabase)
+      if (appData.preferences && appData.preferences.passwordHash) {
+        return appData.preferences.passwordHash;
+      }
+      // 3. Stocké dans le localStorage
+      const localHash = localStorage.getItem(LOCAL_PWD_HASH_KEY);
+      if (localHash) return localHash;
+      return null;
+    }
+
+    function isAppUnlocked() {
+      const requiredHash = getRequiredPasswordHash();
+      if (!requiredHash) return true; // Aucun mot de passe requis
+      const token = localStorage.getItem(AUTH_STORAGE_KEY) || sessionStorage.getItem(AUTH_STORAGE_KEY);
+      return token === requiredHash;
+    }
+
+    function checkAndEnforceSecurity() {
+      updateSecurityUi();
+      const requiredHash = getRequiredPasswordHash();
+      const lockModal = document.getElementById('lockScreenModal');
+      const container = document.getElementById('mainAppContainer');
+
+      if (requiredHash && !isAppUnlocked()) {
+        if (container) container.classList.add('filter', 'blur-md', 'pointer-events-none');
+        if (lockModal) {
+          lockModal.classList.remove('hidden');
+          setTimeout(() => document.getElementById('unlockPasswordInput')?.focus(), 150);
+        }
+        return false;
+      } else {
+        if (container) container.classList.remove('filter', 'blur-md', 'pointer-events-none');
+        if (lockModal) lockModal.classList.add('hidden');
+        return true;
+      }
+    }
+
+    async function handleUnlockSubmit(event) {
+      event.preventDefault();
+      const pwd = document.getElementById('unlockPasswordInput').value;
+      const errorMsg = document.getElementById('unlockErrorMsg');
+      errorMsg.classList.add('hidden');
+
+      if (!pwd) {
+        errorMsg.textContent = 'Veuillez saisir votre mot de passe.';
+        errorMsg.classList.remove('hidden');
+        return;
+      }
+
+      const inputHash = await computeSha256(pwd);
+      const requiredHash = getRequiredPasswordHash();
+
+      if (requiredHash && inputHash !== requiredHash) {
+        errorMsg.textContent = '❌ Mot de passe incorrect.';
+        errorMsg.classList.remove('hidden');
+        document.getElementById('unlockPasswordInput').value = '';
+        document.getElementById('unlockPasswordInput').focus();
+        return;
+      }
+
+      const remember = document.getElementById('rememberDeviceCheck').checked;
+      if (remember) {
+        localStorage.setItem(AUTH_STORAGE_KEY, inputHash);
+      } else {
+        sessionStorage.setItem(AUTH_STORAGE_KEY, inputHash);
+      }
+
+      unlockApplication();
+      showToast('🟢 Accès déverrouillé !');
+    }
+
+    function unlockApplication() {
+      const lockModal = document.getElementById('lockScreenModal');
+      const container = document.getElementById('mainAppContainer');
+      if (lockModal) lockModal.classList.add('hidden');
+      if (container) container.classList.remove('filter', 'blur-md', 'pointer-events-none');
+      updateSecurityUi();
+    }
+
+    function lockApplication() {
+      localStorage.removeItem(AUTH_STORAGE_KEY);
+      sessionStorage.removeItem(AUTH_STORAGE_KEY);
+      const input = document.getElementById('unlockPasswordInput');
+      if (input) input.value = '';
+      const err = document.getElementById('unlockErrorMsg');
+      if (err) err.classList.add('hidden');
+
+      const container = document.getElementById('mainAppContainer');
+      if (container) container.classList.add('filter', 'blur-md', 'pointer-events-none');
+
+      const lockModal = document.getElementById('lockScreenModal');
+      if (lockModal) {
+        lockModal.classList.remove('hidden');
+        setTimeout(() => input?.focus(), 150);
+      }
+      showToast('🔒 Application verrouillée');
+    }
+
+    async function saveAccessPassword() {
+      const newPwd = document.getElementById('cfgNewPassword').value.trim();
+      if (!newPwd) {
+        alert('Veuillez entrer un mot de passe.');
+        return;
+      }
+      const hash = await computeSha256(newPwd);
+      appData.preferences.passwordHash = hash;
+      localStorage.setItem(LOCAL_PWD_HASH_KEY, hash);
+      localStorage.setItem(AUTH_STORAGE_KEY, hash);
+      saveAppData();
+      document.getElementById('cfgNewPassword').value = '';
+      updateSecurityUi();
+      showToast('🔒 Mot de passe d’accès BDD enregistré !');
+    }
+
+    function removeAccessPassword() {
+      if (!confirm('Supprimer le mot de passe d’accès et rendre l’application libre d’accès ?')) return;
+      delete appData.preferences.passwordHash;
+      localStorage.removeItem(LOCAL_PWD_HASH_KEY);
+      localStorage.removeItem(AUTH_STORAGE_KEY);
+      saveAppData();
+      updateSecurityUi();
+      showToast('🔓 Mot de passe supprimé (accès libre)');
+    }
+
+    function updateSecurityUi() {
+      const hash = getRequiredPasswordHash();
+      const badge = document.getElementById('pwdStatusBadge');
+      const btnRemove = document.getElementById('btnRemovePassword');
+      const btnLock = document.getElementById('btnLockApp');
+
+      if (hash) {
+        if (badge) {
+          badge.textContent = 'ACTIF 🔒';
+          badge.className = 'sticker-badge bg-emerald-400 text-pop-dark text-[10px]';
+        }
+        if (btnRemove) btnRemove.classList.remove('hidden');
+        if (btnLock) btnLock.classList.remove('hidden');
+      } else {
+        if (badge) {
+          badge.textContent = 'NON DÉFINI';
+          badge.className = 'sticker-badge bg-pop-gray text-slate-700 text-[10px]';
+        }
+        if (btnRemove) btnRemove.classList.add('hidden');
+        if (btnLock) btnLock.classList.add('hidden');
       }
     }
 
@@ -1277,6 +1528,7 @@ CREATE POLICY "zenleave_days_all" ON public.zenleave_days FOR ALL USING (true);<
         }
       }
 
+      updateSecurityUi();
       document.getElementById('modalDatabase').classList.remove('hidden');
     }
 
@@ -1456,6 +1708,9 @@ CREATE POLICY "zenleave_days_all" ON public.zenleave_days FOR ALL USING (true);<
 
         if (!configErr && configRow && configRow.preferences) {
           appData.preferences = { ...appData.preferences, ...configRow.preferences };
+          if (configRow.preferences.passwordHash) {
+            localStorage.setItem(LOCAL_PWD_HASH_KEY, configRow.preferences.passwordHash);
+          }
         }
 
         // 2. Days
@@ -1483,6 +1738,7 @@ CREATE POLICY "zenleave_days_all" ON public.zenleave_days FOR ALL USING (true);<
         syncPreferencesFields();
         renderAllViews();
         updateKpis();
+        checkAndEnforceSecurity();
         if (showNotification) showToast('☁️ Données synchronisées depuis le Cloud !');
       } catch (err) {
         console.error('Pull from Supabase failed:', err);

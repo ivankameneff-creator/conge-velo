@@ -25,17 +25,24 @@ jobs:
       - name: Checkout du dépôt
         uses: actions/checkout@v4
 
-      - name: Injecter la configuration Supabase depuis les variables/secrets GitHub
+      - name: Injecter la configuration Supabase et Sécurité depuis les variables/secrets GitHub
         run: |
           SUPABASE_URL="${{ vars.SUPABASE_URL || secrets.SUPABASE_URL }}"
           SUPABASE_KEY="${{ vars.SUPABASE_ANON_KEY || secrets.SUPABASE_ANON_KEY }}"
+          APP_PWD="${{ secrets.APP_PASSWORD || vars.APP_PASSWORD }}"
+
+          AUTH_HASH=""
+          if [ -n "$APP_PWD" ]; then
+            AUTH_HASH=$(echo -n "$APP_PWD" | sha256sum | awk '{print $1}')
+          fi
 
           echo "Génération de supabase-config.js..."
           cat <<EOF > supabase-config.js
           // Fichier généré automatiquement par le workflow GitHub Actions
           window.ZENLEAVE_SUPABASE_CONFIG = {
             url: "${SUPABASE_URL}",
-            anonKey: "${SUPABASE_KEY}"
+            anonKey: "${SUPABASE_KEY}",
+            authHash: "${AUTH_HASH}"
           };
           EOF
 
