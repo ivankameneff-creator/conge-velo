@@ -56,6 +56,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 
+  <!-- Supabase JS Client (PostgreSQL Cloud DB) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <style>
     /* Neo-Brutalist base styles */
     body {
@@ -206,6 +209,13 @@
           <button onclick="openPreferencesModal()" class="brutal-btn bg-pop-purple px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 text-white">
             <i data-lucide="sliders" class="w-4 h-4"></i>
             <span>Mes Soldes</span>
+          </button>
+
+          <!-- Database Button (PostgreSQL Cloud) -->
+          <button onclick="openDatabaseModal()" id="btnDatabaseTrigger" class="brutal-btn bg-white px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 text-pop-dark border-2 border-pop-dark" title="Base de données Cloud PostgreSQL">
+            <i data-lucide="database" class="w-4 h-4 text-emerald-600"></i>
+            <span id="dbStatusBadgeText">Cloud DB</span>
+            <span id="dbStatusDot" class="w-2.5 h-2.5 rounded-full bg-slate-400 inline-block transition-colors"></span>
           </button>
 
           <!-- Export Button -->
@@ -892,6 +902,134 @@
     </div>
   </div>
 
+  <!-- ========================================================================= -->
+  <!-- MODAL: BASE DE DONNÉES CLOUD (SUPABASE / POSTGRESQL)                       -->
+  <!-- ========================================================================= -->
+  <div id="modalDatabase" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-pop-dark/60 backdrop-blur-sm">
+    <div class="bg-pop-cream brutal-box-xl border-3 border-pop-dark rounded-2xl w-full max-w-xl p-5 sm:p-6 text-pop-dark relative max-h-[90vh] overflow-y-auto">
+      
+      <!-- Close Button -->
+      <button onclick="closeDatabaseModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-pop-dark text-white font-bold flex items-center justify-center hover:bg-pop-coral transition">
+        ✕
+      </button>
+
+      <!-- Modal Header -->
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-12 h-12 bg-emerald-400 brutal-box rounded-xl flex items-center justify-center text-2xl">
+          🐘
+        </div>
+        <div>
+          <h3 class="text-lg sm:text-xl font-black uppercase">Base de Données Cloud</h3>
+          <p class="text-xs text-slate-600 font-bold">PostgreSQL managé via Supabase (Multi-appareils & Temps réel)</p>
+        </div>
+      </div>
+
+      <!-- Connection Status Banner -->
+      <div id="dbStatusBanner" class="p-3.5 rounded-xl border-2 border-pop-dark mb-4 bg-pop-gray flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <span id="dbBannerDot" class="w-3.5 h-3.5 rounded-full bg-slate-400 inline-block"></span>
+          <div>
+            <div id="dbBannerTitle" class="text-xs font-black">Mode Local (Navigateur / localStorage)</div>
+            <div id="dbBannerSubtitle" class="text-[10px] text-slate-600 font-semibold">Connectez Supabase pour sauvegarder dans une vraie base PostgreSQL.</div>
+          </div>
+        </div>
+        <span id="dbBannerBadge" class="sticker-badge bg-pop-yellow text-[10px]">HORS CLOUD</span>
+      </div>
+
+      <!-- Database Config Form -->
+      <form id="formDatabase" onsubmit="saveDatabaseConfig(event)" class="space-y-3 text-xs">
+        <div>
+          <label class="block font-black text-slate-800 mb-1 flex items-center justify-between">
+            <span>URL du Projet Supabase</span>
+            <span class="text-[10px] font-normal text-slate-500 font-mono">https://xxxxxxxxxxxx.supabase.co</span>
+          </label>
+          <input type="url" id="dbSupabaseUrl" placeholder="https://votre-projet.supabase.co" class="w-full bg-white border-2 border-pop-dark p-2 text-xs font-mono font-bold shadow-brutal-sm rounded-lg" autocomplete="off">
+        </div>
+
+        <div>
+          <label class="block font-black text-slate-800 mb-1 flex items-center justify-between">
+            <span>Clé API Publique (anon key)</span>
+            <span class="text-[10px] font-normal text-slate-500 font-mono">public anon</span>
+          </label>
+          <div class="relative">
+            <input type="password" id="dbSupabaseAnonKey" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..." class="w-full bg-white border-2 border-pop-dark p-2 pr-16 text-xs font-mono font-bold shadow-brutal-sm rounded-lg" autocomplete="off">
+            <button type="button" onclick="togglePasswordVisibility('dbSupabaseAnonKey')" class="absolute right-2 top-2 text-[10px] font-bold text-slate-600 hover:text-pop-dark underline">
+              Voir
+            </button>
+          </div>
+          <div class="text-[10px] text-slate-500 font-semibold mt-1">
+            À récupérer dans votre tableau de bord Supabase : <b>Project Settings > API > Project API keys > anon / public</b>.
+          </div>
+        </div>
+
+        <!-- Connection Buttons -->
+        <div class="pt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <button type="submit" class="brutal-btn bg-emerald-400 p-2.5 rounded-xl font-black text-xs flex items-center justify-center gap-1.5">
+            <i data-lucide="plug-zap" class="w-4 h-4"></i>
+            <span>Tester & Enregistrer</span>
+          </button>
+          <button type="button" onclick="disconnectDatabase()" class="brutal-btn bg-pop-coral text-white p-2.5 rounded-xl font-black text-xs flex items-center justify-center gap-1.5">
+            <i data-lucide="unlink" class="w-4 h-4"></i>
+            <span>Déconnecter (Local)</span>
+          </button>
+        </div>
+
+        <!-- Action Buttons when connected -->
+        <div id="dbConnectedActions" class="hidden pt-3 border-t-2 border-pop-dark/20 grid grid-cols-2 gap-2">
+          <button type="button" onclick="pushAllToDatabase()" class="brutal-btn bg-pop-cyan p-2.5 rounded-xl font-black text-[11px] flex items-center justify-center gap-1.5">
+            <i data-lucide="upload-cloud" class="w-4 h-4"></i>
+            <span>Envoyer vers le Cloud</span>
+          </button>
+          <button type="button" onclick="pullAllFromDatabase(true)" class="brutal-btn bg-pop-yellow p-2.5 rounded-xl font-black text-[11px] flex items-center justify-center gap-1.5">
+            <i data-lucide="download-cloud" class="w-4 h-4"></i>
+            <span>Charger depuis le Cloud</span>
+          </button>
+        </div>
+      </form>
+
+      <!-- SQL Schema Collapsible Helper -->
+      <div class="mt-4 pt-3 border-t-2 border-pop-dark">
+        <details class="text-xs group">
+          <summary class="font-black cursor-pointer flex items-center justify-between py-1 select-none hover:text-pop-pink">
+            <span>📋 Script SQL d'initialisation Supabase (à exécuter 1 fois)</span>
+            <span class="text-[10px] text-slate-500 font-mono group-open:rotate-180 transition">▼</span>
+          </summary>
+          <div class="mt-2 space-y-2">
+            <p class="text-[11px] text-slate-600 font-semibold">
+              Dans Supabase, ouvrez <b>SQL Editor > New Query</b>, collez ce script puis cliquez sur <b>Run</b> (ou utilisez le fichier <code class="bg-white px-1 border border-pop-dark rounded font-mono">schema.sql</code>) :
+            </p>
+            <div class="relative">
+              <pre class="bg-pop-dark text-pop-lime p-2.5 rounded-xl text-[10px] font-mono overflow-x-auto max-h-36 border-2 border-pop-dark" id="sqlSchemaPre">CREATE TABLE IF NOT EXISTS public.zenleave_config (
+    id TEXT PRIMARY KEY DEFAULT 'default',
+    preferences JSONB NOT NULL DEFAULT '{}'::jsonb,
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.zenleave_days (
+    day_date DATE PRIMARY KEY,
+    matin TEXT NOT NULL DEFAULT 'TRAVAILLE',
+    aprem TEXT NOT NULL DEFAULT 'TRAVAILLE',
+    velo BOOLEAN NOT NULL DEFAULT FALSE,
+    velo_trip TEXT NOT NULL DEFAULT 'AR',
+    note TEXT DEFAULT '',
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE public.zenleave_config ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.zenleave_days ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "zenleave_config_all" ON public.zenleave_config FOR ALL USING (true);
+CREATE POLICY "zenleave_days_all" ON public.zenleave_days FOR ALL USING (true);</pre>
+              <button onclick="copySqlSchema()" class="absolute top-2 right-2 bg-pop-yellow text-pop-dark px-2 py-0.5 rounded text-[10px] font-black border border-pop-dark hover:bg-white">
+                Copier SQL
+              </button>
+            </div>
+          </div>
+        </details>
+      </div>
+
+    </div>
+  </div>
+
   <!-- Toast Notification -->
   <div id="toastNotification" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none bg-pop-yellow border-3 border-pop-dark shadow-brutal px-4 py-2.5 rounded-xl flex items-center gap-2 font-black text-xs text-pop-dark">
     <span>⚡</span>
@@ -998,7 +1136,7 @@
     }
 
     // --- Init & Storage ---
-    function initApp() {
+    async function initApp() {
       const stored = localStorage.getItem(APP_STORAGE_KEY);
       if (stored) {
         try {
@@ -1021,6 +1159,9 @@
       renderAllViews();
       updateKpis();
       lucide.createIcons();
+
+      // Initialiser la connexion Supabase PostgreSQL si configurée
+      await initDatabaseConnection();
     }
 
     function seedSampleData() {
@@ -1038,8 +1179,322 @@
       saveAppData();
     }
 
-    function saveAppData() {
+    function saveAppData(changedDate = null) {
       localStorage.setItem(APP_STORAGE_KEY, JSON.stringify(appData));
+      if (isDbConnected && supabaseClient) {
+        if (changedDate) {
+          syncDayToCloud(changedDate, appData.days[changedDate]);
+        } else {
+          syncPreferencesToCloud();
+        }
+      }
+    }
+
+    // --- SUPABASE POSTGRESQL DATABASE INTEGRATION ---
+    const DB_STORAGE_CONFIG_KEY = 'zenleave_supabase_config_v1';
+    let supabaseClient = null;
+    let isDbConnected = false;
+
+    function getSavedDatabaseConfig() {
+      try {
+        const raw = localStorage.getItem(DB_STORAGE_CONFIG_KEY);
+        return raw ? JSON.parse(raw) : { url: '', anonKey: '' };
+      } catch (e) {
+        return { url: '', anonKey: '' };
+      }
+    }
+
+    function openDatabaseModal() {
+      const cfg = getSavedDatabaseConfig();
+      document.getElementById('dbSupabaseUrl').value = cfg.url || '';
+      document.getElementById('dbSupabaseAnonKey').value = cfg.anonKey || '';
+      document.getElementById('modalDatabase').classList.remove('hidden');
+    }
+
+    function closeDatabaseModal() {
+      document.getElementById('modalDatabase').classList.add('hidden');
+    }
+
+    function togglePasswordVisibility(fieldId) {
+      const inp = document.getElementById(fieldId);
+      if (inp) {
+        inp.type = inp.type === 'password' ? 'text' : 'password';
+      }
+    }
+
+    function setDatabaseUiStatus(status, detail = '') {
+      const badgeText = document.getElementById('dbStatusBadgeText');
+      const dot = document.getElementById('dbStatusDot');
+      const banner = document.getElementById('dbStatusBanner');
+      const bannerDot = document.getElementById('dbBannerDot');
+      const bannerTitle = document.getElementById('dbBannerTitle');
+      const bannerSubtitle = document.getElementById('dbBannerSubtitle');
+      const bannerBadge = document.getElementById('dbBannerBadge');
+      const actionsDiv = document.getElementById('dbConnectedActions');
+
+      if (!badgeText || !dot) return;
+
+      if (status === 'CONNECTED') {
+        badgeText.textContent = 'PostgreSQL';
+        dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block transition-colors';
+        
+        if (banner) {
+          banner.className = 'p-3.5 rounded-xl border-2 border-pop-dark mb-4 bg-emerald-100 flex items-center justify-between';
+          bannerDot.className = 'w-3.5 h-3.5 rounded-full bg-emerald-500 inline-block';
+          bannerTitle.textContent = 'Connecté à Supabase (PostgreSQL Cloud)';
+          bannerSubtitle.textContent = 'Vos modifications sont synchronisées en ligne automatiquement.';
+          bannerBadge.textContent = 'EN LIGNE 🟢';
+          bannerBadge.className = 'sticker-badge bg-emerald-300 text-pop-dark text-[10px]';
+        }
+        if (actionsDiv) actionsDiv.classList.remove('hidden');
+      } else if (status === 'CONNECTING') {
+        badgeText.textContent = 'Connexion...';
+        dot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse inline-block transition-colors';
+        
+        if (banner) {
+          banner.className = 'p-3.5 rounded-xl border-2 border-pop-dark mb-4 bg-amber-50 flex items-center justify-between';
+          bannerDot.className = 'w-3.5 h-3.5 rounded-full bg-amber-400 animate-pulse inline-block';
+          bannerTitle.textContent = 'Connexion à la base de données...';
+          bannerSubtitle.textContent = 'Vérification des tables zenleave_config et zenleave_days...';
+          bannerBadge.textContent = 'TESTING ⏳';
+          bannerBadge.className = 'sticker-badge bg-amber-200 text-pop-dark text-[10px]';
+        }
+      } else if (status === 'ERROR') {
+        badgeText.textContent = 'Erreur Cloud';
+        dot.className = 'w-2.5 h-2.5 rounded-full bg-rose-500 inline-block transition-colors';
+        
+        if (banner) {
+          banner.className = 'p-3.5 rounded-xl border-2 border-pop-dark mb-4 bg-rose-100 flex items-center justify-between';
+          bannerDot.className = 'w-3.5 h-3.5 rounded-full bg-rose-500 inline-block';
+          bannerTitle.textContent = 'Erreur de connexion Supabase';
+          bannerSubtitle.textContent = detail || 'Vérifiez l’URL, la clé anon et l’exécution de schema.sql.';
+          bannerBadge.textContent = 'ERREUR 🔴';
+          bannerBadge.className = 'sticker-badge bg-rose-300 text-pop-dark text-[10px]';
+        }
+        if (actionsDiv) actionsDiv.classList.add('hidden');
+      } else {
+        // OFFLINE / LOCAL
+        badgeText.textContent = 'Cloud DB';
+        dot.className = 'w-2.5 h-2.5 rounded-full bg-slate-400 inline-block transition-colors';
+        
+        if (banner) {
+          banner.className = 'p-3.5 rounded-xl border-2 border-pop-dark mb-4 bg-pop-gray flex items-center justify-between';
+          bannerDot.className = 'w-3.5 h-3.5 rounded-full bg-slate-400 inline-block';
+          bannerTitle.textContent = 'Mode Local (Navigateur / localStorage)';
+          bannerSubtitle.textContent = 'Connectez Supabase pour sauvegarder dans une vraie base PostgreSQL.';
+          bannerBadge.textContent = 'HORS CLOUD';
+          bannerBadge.className = 'sticker-badge bg-pop-yellow text-pop-dark text-[10px]';
+        }
+        if (actionsDiv) actionsDiv.classList.add('hidden');
+      }
+    }
+
+    async function initDatabaseConnection(showToasts = false) {
+      const cfg = getSavedDatabaseConfig();
+      if (!cfg.url || !cfg.anonKey) {
+        setDatabaseUiStatus('OFFLINE');
+        return false;
+      }
+
+      if (!window.supabase || typeof window.supabase.createClient !== 'function') {
+        setDatabaseUiStatus('ERROR', 'Bibliothèque Supabase non chargée');
+        return false;
+      }
+
+      setDatabaseUiStatus('CONNECTING');
+      try {
+        supabaseClient = window.supabase.createClient(cfg.url, cfg.anonKey);
+        
+        // Ping test table
+        const { data, error } = await supabaseClient.from('zenleave_config').select('id').limit(1);
+        if (error) throw error;
+
+        isDbConnected = true;
+        setDatabaseUiStatus('CONNECTED');
+        if (showToasts) showToast('🟢 Connecté à Supabase PostgreSQL !');
+
+        // Synchronize from cloud
+        await pullAllFromDatabase(false);
+        return true;
+      } catch (err) {
+        console.warn('Database connection failed:', err);
+        isDbConnected = false;
+        setDatabaseUiStatus('ERROR', err.message || 'Impossible d’accéder aux tables');
+        if (showToasts) showToast('🔴 Erreur connexion Supabase');
+        return false;
+      }
+    }
+
+    async function saveDatabaseConfig(event) {
+      event.preventDefault();
+      const url = document.getElementById('dbSupabaseUrl').value.trim();
+      const anonKey = document.getElementById('dbSupabaseAnonKey').value.trim();
+
+      if (!url || !anonKey) {
+        alert('Veuillez renseigner l’URL et la clé anon de votre projet Supabase.');
+        return;
+      }
+
+      localStorage.setItem(DB_STORAGE_CONFIG_KEY, JSON.stringify({ url, anonKey }));
+      showToast('Test de connexion en cours...');
+      const ok = await initDatabaseConnection(true);
+      if (ok) {
+        // Auto push existing local data if cloud is empty, or offer pull
+        try {
+          const { count } = await supabaseClient.from('zenleave_days').select('*', { count: 'exact', head: true });
+          if (!count || count === 0) {
+            await pushAllToDatabase();
+          } else {
+            await pullAllFromDatabase(true);
+          }
+        } catch (e) {
+          console.warn('Count check error:', e);
+        }
+        closeDatabaseModal();
+      }
+    }
+
+    function disconnectDatabase() {
+      localStorage.removeItem(DB_STORAGE_CONFIG_KEY);
+      isDbConnected = false;
+      supabaseClient = null;
+      document.getElementById('dbSupabaseUrl').value = '';
+      document.getElementById('dbSupabaseAnonKey').value = '';
+      setDatabaseUiStatus('OFFLINE');
+      showToast('Déconnecté : données conservées en local');
+      closeDatabaseModal();
+    }
+
+    async function pullAllFromDatabase(showNotification = true) {
+      if (!isDbConnected || !supabaseClient) return;
+
+      try {
+        // 1. Config
+        const { data: configRow, error: configErr } = await supabaseClient
+          .from('zenleave_config')
+          .select('*')
+          .eq('id', 'default')
+          .maybeSingle();
+
+        if (!configErr && configRow && configRow.preferences) {
+          appData.preferences = { ...appData.preferences, ...configRow.preferences };
+        }
+
+        // 2. Days
+        const { data: daysRows, error: daysErr } = await supabaseClient
+          .from('zenleave_days')
+          .select('*');
+
+        if (!daysErr && Array.isArray(daysRows)) {
+          const cloudDays = {};
+          daysRows.forEach(r => {
+            cloudDays[r.day_date] = {
+              matin: r.matin || 'TRAVAILLE',
+              aprem: r.aprem || 'TRAVAILLE',
+              velo: Boolean(r.velo),
+              veloTrip: r.velo_trip || 'AR',
+              note: r.note || ''
+            };
+          });
+          if (daysRows.length > 0) {
+            appData.days = cloudDays;
+          }
+        }
+
+        localStorage.setItem(APP_STORAGE_KEY, JSON.stringify(appData));
+        syncPreferencesFields();
+        renderAllViews();
+        updateKpis();
+        if (showNotification) showToast('☁️ Données synchronisées depuis le Cloud !');
+      } catch (err) {
+        console.error('Pull from Supabase failed:', err);
+        if (showNotification) showToast('Erreur lecture Cloud');
+      }
+    }
+
+    async function pushAllToDatabase() {
+      if (!isDbConnected || !supabaseClient) {
+        showToast('Base non connectée');
+        return;
+      }
+
+      try {
+        showToast('Envoi vers PostgreSQL...');
+
+        // Upsert Config
+        await supabaseClient.from('zenleave_config').upsert({
+          id: 'default',
+          preferences: appData.preferences,
+          updated_at: new Date().toISOString()
+        });
+
+        // Upsert Days
+        const records = Object.entries(appData.days).map(([dStr, dVal]) => ({
+          day_date: dStr,
+          matin: dVal.matin || 'TRAVAILLE',
+          aprem: dVal.aprem || 'TRAVAILLE',
+          velo: Boolean(dVal.velo),
+          velo_trip: dVal.veloTrip || 'AR',
+          note: dVal.note || '',
+          updated_at: new Date().toISOString()
+        }));
+
+        if (records.length > 0) {
+          const { error } = await supabaseClient.from('zenleave_days').upsert(records, { onConflict: 'day_date' });
+          if (error) throw error;
+        }
+
+        showToast(`☁️ Base PostgreSQL à jour (${records.length} jours)`);
+      } catch (err) {
+        console.error('Push to Supabase failed:', err);
+        alert('Erreur lors de l’envoi vers Supabase : ' + err.message);
+      }
+    }
+
+    async function syncDayToCloud(dateStr, dayData) {
+      if (!isDbConnected || !supabaseClient) return;
+
+      try {
+        if (!dayData || (dayData.matin === 'TRAVAILLE' && dayData.aprem === 'TRAVAILLE' && !dayData.velo && !dayData.note)) {
+          await supabaseClient.from('zenleave_days').delete().eq('day_date', dateStr);
+        } else {
+          await supabaseClient.from('zenleave_days').upsert({
+            day_date: dateStr,
+            matin: dayData.matin || 'TRAVAILLE',
+            aprem: dayData.aprem || 'TRAVAILLE',
+            velo: Boolean(dayData.velo),
+            velo_trip: dayData.veloTrip || 'AR',
+            note: dayData.note || '',
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'day_date' });
+        }
+      } catch (err) {
+        console.warn('Sync day failed:', err);
+      }
+    }
+
+    async function syncPreferencesToCloud() {
+      if (!isDbConnected || !supabaseClient) return;
+      try {
+        await supabaseClient.from('zenleave_config').upsert({
+          id: 'default',
+          preferences: appData.preferences,
+          updated_at: new Date().toISOString()
+        });
+      } catch (err) {
+        console.warn('Sync preferences failed:', err);
+      }
+    }
+
+    function copySqlSchema() {
+      const sql = document.getElementById('sqlSchemaPre').textContent;
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(sql).then(() => {
+          showToast('Script SQL copié dans le presse-papier !');
+        });
+      } else {
+        showToast('Sélectionnez et copiez le texte ci-dessus.');
+      }
     }
 
     function syncPreferencesFields() {
@@ -1535,7 +1990,7 @@
         delete appData.days[dateKey];
       }
 
-      saveAppData();
+      saveAppData(dateKey);
       renderAllViews();
       updateKpis();
     }
@@ -1607,7 +2062,7 @@
         };
       }
 
-      saveAppData();
+      saveAppData(dateKey);
       renderAllViews();
       updateKpis();
       closeDayModal();
@@ -1618,7 +2073,7 @@
       const dateKey = document.getElementById('editDateKey').value;
       if (dateKey && appData.days[dateKey]) {
         delete appData.days[dateKey];
-        saveAppData();
+        saveAppData(dateKey);
         renderAllViews();
         updateKpis();
       }
@@ -1955,6 +2410,9 @@
             syncPreferencesFields();
             renderAllViews();
             updateKpis();
+            if (isDbConnected) {
+              pushAllToDatabase();
+            }
             showToast('Données restaurées avec succès !');
           }
         } catch (err) {

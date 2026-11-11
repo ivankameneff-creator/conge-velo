@@ -39,5 +39,22 @@ Cliquez sur n'importe quelle case de la Heatmap ou du Calendrier pour basculer l
 
 ---
 
+## 🐘 Base de Données Cloud (PostgreSQL / Supabase)
+
+L'application intègre une architecture **hybride Cloud / Offline-First** :
+- **Sans configuration** : fonctionne instantanément en local avec le `localStorage` de votre navigateur.
+- **Avec Supabase** : synchronisation temps réel de vos congés et trajets vélo dans une vraie base de données **PostgreSQL hébergée**, accessible depuis votre PC, smartphone ou tablette.
+
+### Configuration en 2 minutes :
+1. Créez un projet gratuit sur [Supabase.com](https://supabase.com).
+2. Rendez-vous dans le menu **SQL Editor > New Query**, collez le contenu du fichier [`schema.sql`](file:///d:/Dev/IA/vacances/schema.sql) et cliquez sur **Run**.
+3. Dans ZenLeave, cliquez sur le bouton **« Cloud DB »** dans la barre du haut :
+   - Renseignez l'**URL du projet** (`https://xyz.supabase.co`).
+   - Renseignez la **clé API publique (`anon key`)**.
+   - Cliquez sur **« Tester & Enregistrer »**.
+4. Vos soldes et journées sont désormais automatiquement synchronisés dans les tables PostgreSQL `zenleave_config` et `zenleave_days` !
+
+---
+
 ## 🚀 Lancement
 Double-cliquez sur `index.html` pour ouvrir l'application dans votre navigateur !
