@@ -1,0 +1,1988 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZenLeave // POP & HEATMAP EDITION 🌴🚲</title>
+
+  <!-- Google Fonts: Space Grotesk & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700&family=Space+Grotesk:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Space Grotesk"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            pop: {
+              cream: '#FFFDF5',
+              yellow: '#FFE600',
+              pink: '#FF6B8B',
+              coral: '#FF5C5C',
+              cyan: '#38E1FF',
+              lime: '#46FF87',
+              purple: '#B794F4',
+              orange: '#FFA726',
+              dark: '#111827',
+              gray: '#F3F0E6'
+            }
+          },
+          boxShadow: {
+            'brutal-sm': '2px 2px 0px #111827',
+            'brutal': '4px 4px 0px #111827',
+            'brutal-lg': '6px 6px 0px #111827',
+            'brutal-xl': '8px 8px 0px #111827',
+            'brutal-inset': 'inset 2px 2px 0px #111827',
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- SheetJS (Excel) -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <!-- jsPDF & AutoTable (PDF) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
+  <style>
+    /* Neo-Brutalist base styles */
+    body {
+      background-color: #F8F5EC;
+      background-image: 
+        radial-gradient(#111827 1.2px, transparent 1.2px), 
+        radial-gradient(#111827 1.2px, #F8F5EC 1.2px);
+      background-size: 32px 32px;
+      background-position: 0 0, 16px 16px;
+      color: #111827;
+      min-height: 100vh;
+      font-family: 'Space Grotesk', sans-serif;
+    }
+
+    /* Chunky Neo-brutalist buttons & cards */
+    .brutal-box {
+      border: 3px solid #111827;
+      box-shadow: 4px 4px 0px #111827;
+      transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .brutal-box-lg {
+      border: 3.5px solid #111827;
+      box-shadow: 6px 6px 0px #111827;
+    }
+    .brutal-btn {
+      border: 2.5px solid #111827;
+      box-shadow: 3px 3px 0px #111827;
+      font-weight: 700;
+      transition: all 0.12s ease;
+      cursor: pointer;
+    }
+    .brutal-btn:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 5px 5px 0px #111827;
+    }
+    .brutal-btn:active {
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0px #111827;
+    }
+
+    /* Sticker stamps */
+    .sticker-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border: 2px solid #111827;
+      font-weight: 800;
+      font-size: 0.72rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      box-shadow: 2px 2px 0px #111827;
+    }
+
+    /* Heatmap Grid Specifics */
+    .heatmap-cell {
+      width: 15px;
+      height: 15px;
+      border: 1.5px solid #111827;
+      border-radius: 2px;
+      transition: all 0.1s ease;
+      cursor: pointer;
+      position: relative;
+    }
+    .heatmap-cell:hover {
+      transform: scale(1.45);
+      z-index: 20;
+      box-shadow: 2px 2px 0px #111827;
+    }
+
+    /* Calendar Grid Days */
+    .calendar-card-day {
+      min-height: 110px;
+      border: 2.5px solid #111827;
+      box-shadow: 3px 3px 0px #111827;
+      transition: all 0.15s ease;
+    }
+    .calendar-card-day:hover:not(.outside-month) {
+      transform: translate(-2px, -2px);
+      box-shadow: 5px 5px 0px #111827;
+    }
+
+    /* Active Tool Pulse in Quick Paint */
+    .tool-active {
+      background-color: #111827 !important;
+      color: #FFFFFF !important;
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0px #111827 !important;
+    }
+
+    /* Tooltip */
+    #heatmapTooltip {
+      pointer-events: none;
+      transition: opacity 0.1s ease;
+    }
+  </style>
+</head>
+<body class="p-3 sm:p-6 pb-20 selection:bg-pop-yellow selection:text-pop-dark">
+
+  <!-- Heatmap Floating Tooltip -->
+  <div id="heatmapTooltip" class="fixed hidden z-50 bg-pop-dark text-white px-3 py-1.5 border-2 border-pop-yellow shadow-brutal text-xs font-mono rounded"></div>
+
+  <div class="max-w-7xl mx-auto space-y-6">
+
+    <!-- ========================================================================= -->
+    <!-- 1. TOP HEADER & NEO-BRUTALIST TICKER                                      -->
+    <!-- ========================================================================= -->
+    <header class="bg-pop-cream brutal-box-lg rounded-2xl p-4 sm:p-6">
+      
+      <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5">
+        <!-- Logo & Title -->
+        <div class="flex items-center gap-4">
+          <div class="w-14 h-14 bg-pop-yellow brutal-box flex items-center justify-center -rotate-2">
+            <span class="text-3xl">🌴</span>
+          </div>
+          <div>
+            <div class="flex flex-wrap items-center gap-2 mb-1">
+              <h1 class="text-2xl sm:text-3xl font-black tracking-tight uppercase">
+                ZENLEAVE <span class="bg-pop-cyan px-2 border-2 border-pop-dark -rotate-1 inline-block">POP</span>
+              </h1>
+              <span class="sticker-badge bg-pop-lime rotate-1">VÉLO // EDITION</span>
+              <span class="sticker-badge bg-pop-pink text-white -rotate-1" id="badgeYearLabel">2026</span>
+              <span class="sticker-badge bg-pop-yellow text-pop-dark font-mono">½ JOURS DISPO</span>
+            </div>
+            <p class="text-xs sm:text-sm font-semibold text-slate-700">
+              Posez vos congés en journées ou demi-journées (Matin/Aprem), suivez votre heatmap 365j et vos trajets vélo.
+            </p>
+          </div>
+        </div>
+
+        <!-- Top Actions -->
+        <div class="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
+          
+          <!-- Mode Switcher: Heatmap vs Calendrier vs Frise -->
+          <div class="inline-flex bg-pop-gray p-1 border-2 border-pop-dark rounded-xl shadow-brutal-sm">
+            <button onclick="switchView('HEATMAP')" id="btnViewHeatmap" class="px-3 py-1.5 rounded-lg text-xs font-bold transition bg-pop-dark text-white">
+              <i data-lucide="grid" class="w-3.5 h-3.5 inline mr-1"></i> Heatmap 365j
+            </button>
+            <button onclick="switchView('CALENDAR')" id="btnViewCalendar" class="px-3 py-1.5 rounded-lg text-xs font-bold transition text-pop-dark hover:bg-white">
+              <i data-lucide="calendar" class="w-3.5 h-3.5 inline mr-1"></i> Calendrier
+            </button>
+            <button onclick="switchView('TIMELINE')" id="btnViewTimeline" class="px-3 py-1.5 rounded-lg text-xs font-bold transition text-pop-dark hover:bg-white">
+              <i data-lucide="git-commit" class="w-3.5 h-3.5 inline mr-1"></i> Frise
+            </button>
+          </div>
+
+          <!-- Preferences Button -->
+          <button onclick="openPreferencesModal()" class="brutal-btn bg-pop-purple px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 text-white">
+            <i data-lucide="sliders" class="w-4 h-4"></i>
+            <span>Mes Soldes</span>
+          </button>
+
+          <!-- Export Button -->
+          <button onclick="openExportModal()" class="brutal-btn bg-pop-lime px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 text-pop-dark">
+            <i data-lucide="download" class="w-4 h-4"></i>
+            <span>Bilan Vélo (PDF/XLS)</span>
+          </button>
+
+          <!-- Quick Paint Toggle -->
+          <button onclick="toggleQuickPaintBar()" id="btnQuickPaintTrigger" class="brutal-btn bg-pop-yellow px-3 py-2 rounded-xl text-xs flex items-center gap-1.5 text-pop-dark">
+            <i data-lucide="brush" class="w-4 h-4"></i>
+            <span class="hidden sm:inline">Pinceau Rapide</span>
+          </button>
+
+        </div>
+      </div>
+
+      <!-- Quick Paint Palette (Collapsible with Half-Days) -->
+      <div id="quickPaintBar" class="hidden mt-4 pt-4 border-t-2 border-pop-dark bg-white p-3.5 rounded-xl border-2 border-pop-dark shadow-brutal">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-2.5">
+          <div class="flex items-center gap-2">
+            <span class="sticker-badge bg-pop-cyan">MODE PINCEAU ACTIF</span>
+            <span class="text-xs font-bold">Sélectionnez un outil ci-dessous, puis cliquez directement sur une case :</span>
+          </div>
+          <button onclick="toggleQuickPaintBar(false)" class="text-xs font-bold underline hover:text-pop-coral">Fermer ✕</button>
+        </div>
+
+        <!-- Tool Categories -->
+        <div class="space-y-2">
+          <!-- Full Days Row -->
+          <div class="flex flex-wrap items-center gap-1.5 text-xs font-bold">
+            <span class="text-[10px] uppercase font-mono text-slate-500 w-24">Journées (1j) :</span>
+            <button onclick="selectQuickTool('CP_JOUR')" data-tool="CP_JOUR" class="quick-tool-btn brutal-btn bg-pop-cyan/40 px-2.5 py-1 rounded-lg text-xs flex items-center gap-1">
+              🌴 CP (1j)
+            </button>
+            <button onclick="selectQuickTool('RTT_JOUR')" data-tool="RTT_JOUR" class="quick-tool-btn brutal-btn bg-pop-lime/40 px-2.5 py-1 rounded-lg text-xs flex items-center gap-1">
+              ⚡ RTT (1j)
+            </button>
+            <button onclick="selectQuickTool('ANC_JOUR')" data-tool="ANC_JOUR" class="quick-tool-btn brutal-btn bg-pop-purple/40 px-2.5 py-1 rounded-lg text-xs flex items-center gap-1">
+              🎖️ Ancienneté (1j)
+            </button>
+            <button onclick="selectQuickTool('SANS_SOLDE_JOUR')" data-tool="SANS_SOLDE_JOUR" class="quick-tool-btn brutal-btn bg-pop-coral/40 px-2.5 py-1 rounded-lg text-xs flex items-center gap-1">
+              ⏳ Sans solde
+            </button>
+            <button onclick="selectQuickTool('MALADIE_JOUR')" data-tool="MALADIE_JOUR" class="quick-tool-btn brutal-btn bg-pop-orange/40 px-2.5 py-1 rounded-lg text-xs flex items-center gap-1">
+              🏥 Maladie
+            </button>
+            <button onclick="selectQuickTool('VELO_TOGGLE')" data-tool="VELO_TOGGLE" class="quick-tool-btn brutal-btn bg-pop-yellow/60 px-2.5 py-1 rounded-lg text-xs flex items-center gap-1 ml-auto">
+              🚲 Basculer Vélo
+            </button>
+            <button onclick="selectQuickTool('CLEAR')" data-tool="CLEAR" class="quick-tool-btn brutal-btn bg-white px-2.5 py-1 rounded-lg text-xs flex items-center gap-1">
+              ❌ Effacer jour
+            </button>
+          </div>
+
+          <!-- Half Days Row (Matin / Aprem) -->
+          <div class="flex flex-wrap items-center gap-1.5 text-xs font-bold pt-1.5 border-t border-pop-dark/20">
+            <span class="text-[10px] uppercase font-mono text-slate-500 w-24">Demi-Jours (½j) :</span>
+            
+            <!-- CP 1/2 -->
+            <button onclick="selectQuickTool('CP_MATIN')" data-tool="CP_MATIN" class="quick-tool-btn brutal-btn bg-pop-cyan/60 px-2.5 py-1 rounded-lg text-xs flex items-center gap-1">
+              🌅 ½ CP Matin
+            </button>
+            <button onclick="selectQuickTool('CP_APREM')" data-tool="CP_APREM" class="quick-tool-btn brutal-btn bg-pop-cyan/60 px-2.5 py-1 rounded-lg text-xs flex items-center gap-1">
+              🌇 ½ CP Aprem
+            </button>
+
+            <!-- RTT 1/2 -->
+            <button onclick="selectQuickTool('RTT_MATIN')" data-tool="RTT_MATIN" class="quick-tool-btn brutal-btn bg-pop-lime/60 px-2.5 py-1 rounded-lg text-xs flex items-center gap-1">
+              🌅 ½ RTT Matin
+            </button>
+            <button onclick="selectQuickTool('RTT_APREM')" data-tool="RTT_APREM" class="quick-tool-btn brutal-btn bg-pop-lime/60 px-2.5 py-1 rounded-lg text-xs flex items-center gap-1">
+              🌇 ½ RTT Aprem
+            </button>
+
+            <!-- Ancienneté 1/2 -->
+            <button onclick="selectQuickTool('ANC_MATIN')" data-tool="ANC_MATIN" class="quick-tool-btn brutal-btn bg-pop-purple/60 px-2.5 py-1 rounded-lg text-xs flex items-center gap-1">
+              🌅 ½ Anc. Matin
+            </button>
+            <button onclick="selectQuickTool('ANC_APREM')" data-tool="ANC_APREM" class="quick-tool-btn brutal-btn bg-pop-purple/60 px-2.5 py-1 rounded-lg text-xs flex items-center gap-1">
+              🌇 ½ Anc. Aprem
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+    </header>
+
+    <!-- ========================================================================= -->
+    <!-- 2. POP METRICS & KPI CARDS                                                -->
+    <!-- ========================================================================= -->
+    <section class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5">
+      
+      <!-- CP Card -->
+      <div class="bg-pop-cyan brutal-box rounded-2xl p-3.5 flex flex-col justify-between">
+        <div class="flex items-center justify-between">
+          <span class="sticker-badge bg-white">CONGÉS PAYÉS</span>
+          <span class="text-lg">🌴</span>
+        </div>
+        <div class="my-3">
+          <div class="text-3xl sm:text-4xl font-black text-pop-dark">
+            <span id="kpiCpRemaining">25</span>
+            <span class="text-xs font-bold text-pop-dark/80">restants</span>
+          </div>
+          <div class="text-[11px] font-bold mt-1 text-pop-dark flex justify-between">
+            <span>Posés : <b id="kpiCpTaken">0</b>j</span>
+            <span>Total : <b id="kpiCpTotal">25</b>j</span>
+          </div>
+        </div>
+        <div class="w-full bg-white border-2 border-pop-dark h-3 rounded-full overflow-hidden p-[1px]">
+          <div id="barCp" class="bg-pop-dark h-full rounded-full transition-all duration-300" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <!-- RTT Card -->
+      <div class="bg-pop-lime brutal-box rounded-2xl p-3.5 flex flex-col justify-between">
+        <div class="flex items-center justify-between">
+          <span class="sticker-badge bg-white">RTT</span>
+          <span class="text-lg">⚡</span>
+        </div>
+        <div class="my-3">
+          <div class="text-3xl sm:text-4xl font-black text-pop-dark">
+            <span id="kpiRttRemaining">10</span>
+            <span class="text-xs font-bold text-pop-dark/80">restants</span>
+          </div>
+          <div class="text-[11px] font-bold mt-1 text-pop-dark flex justify-between">
+            <span>Posés : <b id="kpiRttTaken">0</b>j</span>
+            <span>Total : <b id="kpiRttTotal">10</b>j</span>
+          </div>
+        </div>
+        <div class="w-full bg-white border-2 border-pop-dark h-3 rounded-full overflow-hidden p-[1px]">
+          <div id="barRtt" class="bg-pop-dark h-full rounded-full transition-all duration-300" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <!-- Ancienneté Card -->
+      <div class="bg-pop-purple brutal-box rounded-2xl p-3.5 flex flex-col justify-between text-white">
+        <div class="flex items-center justify-between">
+          <span class="sticker-badge bg-pop-dark text-white">ANCIENNETÉ</span>
+          <span class="text-lg">🎖️</span>
+        </div>
+        <div class="my-3">
+          <div class="text-3xl sm:text-4xl font-black text-white">
+            <span id="kpiAncRemaining">2</span>
+            <span class="text-xs font-bold text-white/80">restants</span>
+          </div>
+          <div class="text-[11px] font-bold mt-1 text-white/90 flex justify-between">
+            <span>Posés : <b id="kpiAncTaken">0</b>j</span>
+            <span>Total : <b id="kpiAncTotal">2</b>j</span>
+          </div>
+        </div>
+        <div class="w-full bg-white border-2 border-pop-dark h-3 rounded-full overflow-hidden p-[1px]">
+          <div id="barAnc" class="bg-pop-dark h-full rounded-full transition-all duration-300" style="width: 0%"></div>
+        </div>
+      </div>
+
+      <!-- Sans Solde Card -->
+      <div class="bg-pop-coral brutal-box rounded-2xl p-3.5 flex flex-col justify-between text-white">
+        <div class="flex items-center justify-between">
+          <span class="sticker-badge bg-pop-dark text-white">SANS SOLDE</span>
+          <span class="text-lg">⏳</span>
+        </div>
+        <div class="my-3">
+          <div class="text-3xl sm:text-4xl font-black text-white">
+            <span id="kpiSansSoldeTaken">0</span>
+            <span class="text-xs font-bold text-white/80">jours</span>
+          </div>
+          <p class="text-[11px] font-bold mt-1 text-white/90">
+            Non rémunéré
+          </p>
+        </div>
+        <span class="text-[10px] font-mono uppercase bg-pop-dark px-1.5 py-0.5 rounded text-white self-start">Sans quota</span>
+      </div>
+
+      <!-- Maladie Card -->
+      <div class="bg-pop-orange brutal-box rounded-2xl p-3.5 flex flex-col justify-between text-pop-dark">
+        <div class="flex items-center justify-between">
+          <span class="sticker-badge bg-white">MALADIE</span>
+          <span class="text-lg">🏥</span>
+        </div>
+        <div class="my-3">
+          <div class="text-3xl sm:text-4xl font-black text-pop-dark">
+            <span id="kpiMaladieTaken">0</span>
+            <span class="text-xs font-bold text-pop-dark/80">jours</span>
+          </div>
+          <p class="text-[11px] font-bold mt-1 text-pop-dark/90">
+            Arrêts déclarés
+          </p>
+        </div>
+        <span class="text-[10px] font-mono uppercase bg-pop-dark text-white px-1.5 py-0.5 rounded self-start">Justificatifs</span>
+      </div>
+
+      <!-- VÉLO COMMUTE CARD -->
+      <div class="bg-pop-yellow brutal-box rounded-2xl p-3.5 flex flex-col justify-between text-pop-dark">
+        <div class="flex items-center justify-between">
+          <span class="sticker-badge bg-pop-dark text-pop-yellow">VÉLO MOBILITÉ</span>
+          <span class="text-xl">🚲</span>
+        </div>
+        <div class="my-2">
+          <div class="text-3xl sm:text-4xl font-black text-pop-dark">
+            <span id="kpiVeloDays">0</span>
+            <span class="text-xs font-bold text-pop-dark/80">jours</span>
+          </div>
+          <div class="text-[11px] font-bold mt-1 text-pop-dark flex justify-between">
+            <span>Distance totale</span>
+            <span><b id="kpiVeloKm">0</b> km</span>
+          </div>
+        </div>
+        <div class="bg-pop-dark text-white px-2 py-1 rounded-lg text-[10px] font-mono flex items-center justify-between">
+          <span>🌱 CO2 évité :</span>
+          <b id="kpiVeloCo2">0 kg</b>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- 3. MAIN INTERACTIVE VIEWS CONTAINER                                       -->
+    <!-- ========================================================================= -->
+
+    <!-- VUE A : HEATMAP ANNUELLE 365 JOURS -->
+    <div id="viewHeatmapContainer" class="bg-pop-cream brutal-box-lg rounded-2xl p-4 sm:p-6">
+      
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-4 border-b-2 border-pop-dark mb-4">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-xl">🔥</span>
+            <h2 class="text-lg sm:text-xl font-black uppercase tracking-tight">
+              Heatmap Annuelle 365 Jours — <span id="heatmapYearTitle">2026</span>
+            </h2>
+          </div>
+          <p class="text-xs font-semibold text-slate-600">
+            Les demi-journées sont représentées par une découpe diagonale bicolore (Matin à gauche / Après-midi à droite).
+          </p>
+        </div>
+
+        <!-- Legend Swatches -->
+        <div class="flex flex-wrap items-center gap-2 text-[11px] font-bold">
+          <span class="flex items-center gap-1"><span class="w-3.5 h-3.5 bg-white border-2 border-pop-dark rounded-sm"></span> Travaillé</span>
+          <span class="flex items-center gap-1"><span class="w-3.5 h-3.5 bg-pop-cyan border-2 border-pop-dark rounded-sm"></span> CP</span>
+          <span class="flex items-center gap-1"><span class="w-3.5 h-3.5 bg-pop-lime border-2 border-pop-dark rounded-sm"></span> RTT</span>
+          <span class="flex items-center gap-1"><span class="w-3.5 h-3.5 bg-pop-purple border-2 border-pop-dark rounded-sm"></span> Ancienneté</span>
+          <span class="flex items-center gap-1"><span class="w-3.5 h-3.5 border-2 border-pop-dark rounded-sm" style="background: linear-gradient(90deg, #38E1FF 50%, #ffffff 50%);"></span> ½ Journée</span>
+          <span class="flex items-center gap-1"><span class="w-3.5 h-3.5 bg-pop-pink border-2 border-pop-dark rounded-sm"></span> Férié</span>
+          <span class="flex items-center gap-1"><span class="w-3.5 h-3.5 bg-pop-yellow border-2 border-pop-dark rounded-sm flex items-center justify-center text-[9px]">🚲</span> Vélo</span>
+        </div>
+      </div>
+
+      <!-- Heatmap Scrollable Matrix Container -->
+      <div class="overflow-x-auto pb-4">
+        <div id="heatmapGrid" class="inline-block min-w-full">
+          <!-- Dynamically generated -->
+        </div>
+      </div>
+
+      <!-- Quick summary footer for Heatmap -->
+      <div class="mt-4 pt-3 border-t-2 border-pop-dark flex flex-wrap items-center justify-between text-xs font-bold text-slate-700">
+        <div class="flex items-center gap-4">
+          <span>Total jours ouvrés dans l'année : <b id="statWorkingDays">251</b></span>
+          <span>•</span>
+          <span>Jours de congés cumulés : <b id="statTotalLeaveDays" class="text-pop-coral">0</b>j</span>
+          <span>•</span>
+          <span>Taux de déplacements à vélo : <b id="statBikeRatio" class="text-emerald-700">0%</b></span>
+        </div>
+        <button onclick="goToHeatmapToday()" class="brutal-btn bg-white px-2.5 py-1 rounded text-[11px]">
+          Pointer sur aujourd'hui 📍
+        </button>
+      </div>
+
+    </div>
+
+    <!-- VUE B : CALENDRIER MENSUEL (POP EDITION) -->
+    <div id="viewCalendarContainer" class="hidden bg-pop-cream brutal-box-lg rounded-2xl p-4 sm:p-6">
+      
+      <!-- Calendar Nav -->
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pb-4 border-b-2 border-pop-dark mb-4">
+        
+        <div class="flex items-center gap-2 sm:gap-3">
+          <button onclick="changeMonth(-1)" class="brutal-btn bg-white p-2 rounded-xl">
+            <i data-lucide="chevron-left" class="w-5 h-5"></i>
+          </button>
+          
+          <h2 id="currentMonthYearLabel" class="text-xl sm:text-2xl font-black capitalize min-w-[200px] text-center bg-pop-yellow px-4 py-1 border-2 border-pop-dark shadow-brutal-sm rounded-xl">
+            Novembre 2026
+          </h2>
+
+          <button onclick="changeMonth(1)" class="brutal-btn bg-white p-2 rounded-xl">
+            <i data-lucide="chevron-right" class="w-5 h-5"></i>
+          </button>
+
+          <button onclick="goToToday()" class="brutal-btn bg-pop-cyan px-3 py-1.5 rounded-xl text-xs font-black ml-1">
+            Aujourd'hui
+          </button>
+        </div>
+
+        <div class="text-xs font-bold flex items-center gap-3">
+          <span class="sticker-badge bg-white">CLIQUEZ POUR ÉDITER</span>
+          <span class="text-slate-600">Sélectionnez demi-journée Matin ou Aprem dans la fiche</span>
+        </div>
+
+      </div>
+
+      <!-- Days of Week Header -->
+      <div class="grid grid-cols-7 gap-2 mb-2 text-center text-xs font-black uppercase">
+        <div class="py-1 bg-white border-2 border-pop-dark rounded-lg">Lun</div>
+        <div class="py-1 bg-white border-2 border-pop-dark rounded-lg">Mar</div>
+        <div class="py-1 bg-white border-2 border-pop-dark rounded-lg">Mer</div>
+        <div class="py-1 bg-white border-2 border-pop-dark rounded-lg">Jeu</div>
+        <div class="py-1 bg-white border-2 border-pop-dark rounded-lg">Ven</div>
+        <div class="py-1 bg-pop-gray border-2 border-pop-dark rounded-lg text-slate-500">Sam</div>
+        <div class="py-1 bg-pop-gray border-2 border-pop-dark rounded-lg text-slate-500">Dim</div>
+      </div>
+
+      <!-- Calendar Days Grid -->
+      <div id="calendarGrid" class="grid grid-cols-7 gap-2">
+        <!-- Rendered dynamically -->
+      </div>
+
+    </div>
+
+    <!-- VUE C : FRISE CHRONOLOGIQUE CONTINUE (GANTT STYLE) -->
+    <div id="viewTimelineContainer" class="hidden bg-pop-cream brutal-box-lg rounded-2xl p-4 sm:p-6">
+      
+      <div class="flex items-center justify-between pb-4 border-b-2 border-pop-dark mb-4">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-xl">🚀</span>
+            <h2 class="text-lg sm:text-xl font-black uppercase">
+              Frise Chronologique des Vacances & Trajets
+            </h2>
+          </div>
+          <p class="text-xs font-semibold text-slate-600">
+            Historique ordonné de vos journées et demi-journées posées.
+          </p>
+        </div>
+      </div>
+
+      <!-- Timeline stream of periods -->
+      <div id="timelinePeriodsList" class="space-y-3 max-h-[500px] overflow-y-auto pr-2">
+        <!-- Dynamically rendered -->
+      </div>
+
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- 4. FOOTER & DATA BACKUP                                                  -->
+    <!-- ========================================================================= -->
+    <footer class="bg-white brutal-box rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-bold">
+      <div class="flex items-center gap-2">
+        <span class="sticker-badge bg-pop-yellow">STOCKAGE LOCAL</span>
+        <span class="text-slate-600">Données enregistrées dans votre navigateur.</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <button onclick="exportJsonBackup()" class="hover:underline flex items-center gap-1 text-pop-dark">
+          <i data-lucide="file-up" class="w-3.5 h-3.5"></i> Sauvegarder JSON
+        </button>
+        <span>•</span>
+        <button onclick="triggerJsonImport()" class="hover:underline flex items-center gap-1 text-pop-dark">
+          <i data-lucide="file-down" class="w-3.5 h-3.5"></i> Restaurer JSON
+        </button>
+        <input type="file" id="jsonFileInput" class="hidden" accept=".json" onchange="handleJsonImport(event)">
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL 1 : MES SOLDES & PRÉFÉRENCES (POP)                                  -->
+  <!-- ========================================================================= -->
+  <div id="modalPreferences" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-pop-dark/60 backdrop-blur-sm">
+    <div class="bg-pop-cream brutal-box-lg rounded-2xl w-full max-w-lg p-6 relative">
+      
+      <div class="flex items-center justify-between pb-3 border-b-2 border-pop-dark mb-4">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 bg-pop-purple brutal-box flex items-center justify-center text-white">
+            ⚙️
+          </div>
+          <h3 class="text-lg font-black uppercase">Mes Soldes & Quotas</h3>
+        </div>
+        <button onclick="closePreferencesModal()" class="brutal-btn bg-white w-8 h-8 rounded-lg flex items-center justify-center text-sm">
+          ✕
+        </button>
+      </div>
+
+      <form onsubmit="savePreferences(event)" class="space-y-4">
+        
+        <div>
+          <label class="block text-xs font-black uppercase mb-1">Année de référence</label>
+          <input type="number" id="prefYear" class="w-full bg-white border-2 border-pop-dark p-2 text-sm font-bold shadow-brutal-sm rounded-lg" value="2026" min="2020" max="2035">
+        </div>
+
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-black uppercase text-pop-dark mb-1">Total CP</label>
+            <input type="number" step="0.5" id="prefCpTotal" class="w-full bg-pop-cyan/20 border-2 border-pop-dark p-2 text-sm font-bold shadow-brutal-sm rounded-lg" value="25" required>
+          </div>
+          <div>
+            <label class="block text-xs font-black uppercase text-pop-dark mb-1">Total RTT</label>
+            <input type="number" step="0.5" id="prefRttTotal" class="w-full bg-pop-lime/20 border-2 border-pop-dark p-2 text-sm font-bold shadow-brutal-sm rounded-lg" value="10" required>
+          </div>
+          <div>
+            <label class="block text-xs font-black uppercase text-pop-dark mb-1">Ancienneté</label>
+            <input type="number" step="0.5" id="prefAncTotal" class="w-full bg-pop-purple/20 border-2 border-pop-dark p-2 text-sm font-bold shadow-brutal-sm rounded-lg" value="2" required>
+          </div>
+        </div>
+
+        <div class="pt-3 border-t-2 border-pop-dark">
+          <h4 class="text-xs font-black uppercase mb-2 flex items-center gap-1.5">
+            <span>🚲</span> Paramètres Trajet Vélo
+          </h4>
+          <div>
+            <label class="block text-xs font-bold text-slate-700 mb-1">Distance aller-retour journalière (km)</label>
+            <input type="number" step="0.1" id="prefBikeDailyKm" class="w-full bg-white border-2 border-pop-dark p-2 text-sm font-bold shadow-brutal-sm rounded-lg" value="14.0">
+            <span class="text-[10px] text-slate-500">Ex: 14 km (7 km aller + 7 km retour)</span>
+          </div>
+        </div>
+
+        <div class="pt-3 border-t-2 border-pop-dark">
+          <h4 class="text-xs font-black uppercase mb-2 flex items-center gap-1.5">
+            <span>👤</span> Informations Salarié (pour exports)
+          </h4>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Nom complet</label>
+              <input type="text" id="prefUserName" placeholder="Ex: Jean Dupont" class="w-full bg-white border-2 border-pop-dark p-2 text-sm font-bold shadow-brutal-sm rounded-lg">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Entreprise / Service</label>
+              <input type="text" id="prefUserCompany" placeholder="Ex: IT & Tech" class="w-full bg-white border-2 border-pop-dark p-2 text-sm font-bold shadow-brutal-sm rounded-lg">
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-3 border-t-2 border-pop-dark">
+          <button type="button" onclick="closePreferencesModal()" class="brutal-btn bg-white px-4 py-2 rounded-xl text-xs">
+            Annuler
+          </button>
+          <button type="submit" class="brutal-btn bg-pop-yellow px-5 py-2 rounded-xl text-xs font-black">
+            Enregistrer ✅
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL 2 : ÉDITION DU JOUR (AVEC MATIN & APREM INDÉPENDANTS)                -->
+  <!-- ========================================================================= -->
+  <div id="modalDayEdit" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-pop-dark/60 backdrop-blur-sm">
+    <div class="bg-pop-cream brutal-box-lg rounded-2xl w-full max-w-lg p-6 relative max-h-[95vh] overflow-y-auto">
+      
+      <div class="flex items-center justify-between pb-3 border-b-2 border-pop-dark mb-4">
+        <div>
+          <span class="sticker-badge bg-pop-yellow" id="dayModalDateSub">ÉDITION DU JOUR</span>
+          <h3 id="dayModalDateTitle" class="text-lg font-black uppercase mt-1">Lundi 16 Novembre 2026</h3>
+        </div>
+        <button onclick="closeDayModal()" class="brutal-btn bg-white w-8 h-8 rounded-lg flex items-center justify-center text-sm">
+          ✕
+        </button>
+      </div>
+
+      <form onsubmit="saveDayDetails(event)" class="space-y-4">
+        <input type="hidden" id="editDateKey">
+
+        <!-- 1-Click Quick Presets for this day -->
+        <div class="bg-white border-2 border-pop-dark p-2.5 rounded-xl shadow-brutal-sm">
+          <span class="text-[10px] font-mono font-black uppercase text-slate-500 block mb-1.5">⚡ Raccourcis en 1 clic :</span>
+          <div class="flex flex-wrap gap-1.5 text-xs font-bold">
+            <!-- CP presets -->
+            <button type="button" onclick="setModalPreset('CP', 'CP')" class="brutal-btn bg-pop-cyan px-2 py-1 rounded text-[11px]">🌴 Journée CP</button>
+            <button type="button" onclick="setModalPreset('CP', 'TRAVAILLE')" class="brutal-btn bg-pop-cyan/60 px-2 py-1 rounded text-[11px]">🌅 ½ CP Matin</button>
+            <button type="button" onclick="setModalPreset('TRAVAILLE', 'CP')" class="brutal-btn bg-pop-cyan/60 px-2 py-1 rounded text-[11px]">🌇 ½ CP Aprem</button>
+            
+            <!-- RTT presets -->
+            <button type="button" onclick="setModalPreset('RTT', 'RTT')" class="brutal-btn bg-pop-lime px-2 py-1 rounded text-[11px]">⚡ Journée RTT</button>
+            <button type="button" onclick="setModalPreset('RTT', 'TRAVAILLE')" class="brutal-btn bg-pop-lime/60 px-2 py-1 rounded text-[11px]">🌅 ½ RTT Matin</button>
+            <button type="button" onclick="setModalPreset('TRAVAILLE', 'RTT')" class="brutal-btn bg-pop-lime/60 px-2 py-1 rounded text-[11px]">🌇 ½ RTT Aprem</button>
+
+            <!-- Anciennete presets -->
+            <button type="button" onclick="setModalPreset('ANCIENNETE', 'ANCIENNETE')" class="brutal-btn bg-pop-purple text-white px-2 py-1 rounded text-[11px]">🎖️ Journée Anc.</button>
+            <button type="button" onclick="setModalPreset('ANCIENNETE', 'TRAVAILLE')" class="brutal-btn bg-pop-purple/60 px-2 py-1 rounded text-[11px]">🌅 ½ Anc. Matin</button>
+            <button type="button" onclick="setModalPreset('TRAVAILLE', 'ANCIENNETE')" class="brutal-btn bg-pop-purple/60 px-2 py-1 rounded text-[11px]">🌇 ½ Anc. Aprem</button>
+          </div>
+        </div>
+
+        <!-- Section Matin (0.5j) -->
+        <div class="bg-pop-gray border-2 border-pop-dark p-3 rounded-xl">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-black uppercase flex items-center gap-1.5">
+              <span>🌅</span> MATINÉE (0.5 jour)
+            </span>
+            <span class="text-[10px] font-mono text-slate-500">Première moitié de journée</span>
+          </div>
+
+          <div class="grid grid-cols-3 sm:grid-cols-6 gap-1.5 text-xs font-bold">
+            <label class="p-1.5 bg-white border-2 border-pop-dark rounded-lg flex items-center justify-center gap-1 cursor-pointer">
+              <input type="radio" name="dayMatin" value="TRAVAILLE" checked class="text-pop-dark"> 💼
+            </label>
+            <label class="p-1.5 bg-pop-cyan/40 border-2 border-pop-dark rounded-lg flex items-center justify-center gap-1 cursor-pointer">
+              <input type="radio" name="dayMatin" value="CP" class="text-pop-dark"> 🌴 CP
+            </label>
+            <label class="p-1.5 bg-pop-lime/40 border-2 border-pop-dark rounded-lg flex items-center justify-center gap-1 cursor-pointer">
+              <input type="radio" name="dayMatin" value="RTT" class="text-pop-dark"> ⚡ RTT
+            </label>
+            <label class="p-1.5 bg-pop-purple/40 border-2 border-pop-dark rounded-lg flex items-center justify-center gap-1 cursor-pointer">
+              <input type="radio" name="dayMatin" value="ANCIENNETE" class="text-pop-dark"> 🎖️ Anc.
+            </label>
+            <label class="p-1.5 bg-pop-coral/40 border-2 border-pop-dark rounded-lg flex items-center justify-center gap-1 cursor-pointer">
+              <input type="radio" name="dayMatin" value="SANS_SOLDE" class="text-pop-dark"> ⏳ S.S.
+            </label>
+            <label class="p-1.5 bg-pop-orange/40 border-2 border-pop-dark rounded-lg flex items-center justify-center gap-1 cursor-pointer">
+              <input type="radio" name="dayMatin" value="MALADIE" class="text-pop-dark"> 🏥 Mal.
+            </label>
+          </div>
+        </div>
+
+        <!-- Section Après-midi (0.5j) -->
+        <div class="bg-pop-gray border-2 border-pop-dark p-3 rounded-xl">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-black uppercase flex items-center gap-1.5">
+              <span>🌇</span> APRÈS-MIDI (0.5 jour)
+            </span>
+            <span class="text-[10px] font-mono text-slate-500">Seconde moitié de journée</span>
+          </div>
+
+          <div class="grid grid-cols-3 sm:grid-cols-6 gap-1.5 text-xs font-bold">
+            <label class="p-1.5 bg-white border-2 border-pop-dark rounded-lg flex items-center justify-center gap-1 cursor-pointer">
+              <input type="radio" name="dayAprem" value="TRAVAILLE" checked class="text-pop-dark"> 💼
+            </label>
+            <label class="p-1.5 bg-pop-cyan/40 border-2 border-pop-dark rounded-lg flex items-center justify-center gap-1 cursor-pointer">
+              <input type="radio" name="dayAprem" value="CP" class="text-pop-dark"> 🌴 CP
+            </label>
+            <label class="p-1.5 bg-pop-lime/40 border-2 border-pop-dark rounded-lg flex items-center justify-center gap-1 cursor-pointer">
+              <input type="radio" name="dayAprem" value="RTT" class="text-pop-dark"> ⚡ RTT
+            </label>
+            <label class="p-1.5 bg-pop-purple/40 border-2 border-pop-dark rounded-lg flex items-center justify-center gap-1 cursor-pointer">
+              <input type="radio" name="dayAprem" value="ANCIENNETE" class="text-pop-dark"> 🎖️ Anc.
+            </label>
+            <label class="p-1.5 bg-pop-coral/40 border-2 border-pop-dark rounded-lg flex items-center justify-center gap-1 cursor-pointer">
+              <input type="radio" name="dayAprem" value="SANS_SOLDE" class="text-pop-dark"> ⏳ S.S.
+            </label>
+            <label class="p-1.5 bg-pop-orange/40 border-2 border-pop-dark rounded-lg flex items-center justify-center gap-1 cursor-pointer">
+              <input type="radio" name="dayAprem" value="MALADIE" class="text-pop-dark"> 🏥 Mal.
+            </label>
+          </div>
+        </div>
+
+        <!-- Option Vélo -->
+        <div class="pt-2 border-t-2 border-pop-dark">
+          <div class="bg-pop-yellow/40 border-2 border-pop-dark p-3 rounded-xl">
+            <label class="flex items-center gap-2 font-black text-sm cursor-pointer">
+              <input type="checkbox" id="editVeloCheck" class="w-5 h-5 border-2 border-pop-dark rounded text-pop-dark">
+              <span>🚲 Déplacement effectué à vélo ce jour</span>
+            </label>
+
+            <div class="mt-2.5 pt-2 border-t border-pop-dark/30 flex items-center justify-between text-xs font-bold">
+              <span>Trajet :</span>
+              <select id="editVeloTripType" class="bg-white border-2 border-pop-dark rounded-lg px-2 py-1 text-xs font-bold">
+                <option value="AR">Aller-Retour complet</option>
+                <option value="ALLER">Aller simple (50% km)</option>
+                <option value="RETOUR">Retour simple (50% km)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Note -->
+        <div>
+          <label class="block text-xs font-black uppercase mb-1">Commentaire (optionnel)</label>
+          <input type="text" id="editDayNote" placeholder="Ex: Pont, astreinte, rdv..." class="w-full bg-white border-2 border-pop-dark p-2 text-xs font-bold shadow-brutal-sm rounded-lg">
+        </div>
+
+        <!-- Actions -->
+        <div class="flex items-center justify-between pt-3 border-t-2 border-pop-dark">
+          <button type="button" onclick="clearCurrentDay()" class="brutal-btn bg-pop-coral text-white px-3 py-1.5 rounded-lg text-xs font-black">
+            Effacer
+          </button>
+          <div class="flex items-center gap-2">
+            <button type="button" onclick="closeDayModal()" class="brutal-btn bg-white px-3 py-1.5 rounded-lg text-xs">
+              Annuler
+            </button>
+            <button type="submit" class="brutal-btn bg-pop-lime px-4 py-1.5 rounded-lg text-xs font-black">
+              Valider le jour
+            </button>
+          </div>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODAL 3 : EXPORT BILAN VÉLO & CONGÉS                                      -->
+  <!-- ========================================================================= -->
+  <div id="modalExport" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-pop-dark/60 backdrop-blur-sm">
+    <div class="bg-pop-cream brutal-box-lg rounded-2xl w-full max-w-2xl p-6 relative max-h-[90vh] overflow-y-auto">
+      
+      <div class="flex items-center justify-between pb-3 border-b-2 border-pop-dark mb-4">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 bg-pop-lime brutal-box flex items-center justify-center">
+            📊
+          </div>
+          <div>
+            <h3 class="text-lg font-black uppercase">Attestation & Exports Salarié</h3>
+            <p class="text-xs font-bold text-slate-600">Générez votre rapport Forfait Mobilité Durable (Vélo)</p>
+          </div>
+        </div>
+        <button onclick="closeExportModal()" class="brutal-btn bg-white w-8 h-8 rounded-lg flex items-center justify-center text-sm">
+          ✕
+        </button>
+      </div>
+
+      <!-- Scope Filter -->
+      <div class="bg-white border-2 border-pop-dark p-3 rounded-xl mb-4 flex items-center justify-between">
+        <div class="flex items-center gap-2 text-xs font-bold">
+          <span>Période :</span>
+          <select id="exportFilterScope" onchange="updateExportPreview()" class="bg-pop-gray border-2 border-pop-dark rounded px-2 py-1 font-bold">
+            <option value="ALL">Année entière</option>
+            <option value="CURRENT_MONTH" selected>Mois en cours</option>
+          </select>
+        </div>
+        <span class="sticker-badge bg-pop-yellow" id="previewCountBadge">0 JOURS</span>
+      </div>
+
+      <!-- Summary KPI Row -->
+      <div class="grid grid-cols-3 gap-2.5 mb-4 text-center font-bold">
+        <div class="bg-pop-yellow brutal-box p-2.5 rounded-xl">
+          <div class="text-[10px] uppercase">Jours vélo</div>
+          <div id="exportStatDays" class="text-2xl font-black">0</div>
+        </div>
+        <div class="bg-pop-cyan brutal-box p-2.5 rounded-xl">
+          <div class="text-[10px] uppercase">Kilomètres</div>
+          <div id="exportStatKm" class="text-2xl font-black">0 km</div>
+        </div>
+        <div class="bg-pop-purple brutal-box p-2.5 rounded-xl text-white">
+          <div class="text-[10px] uppercase">CO2 Évité</div>
+          <div id="exportStatCo2" class="text-2xl font-black">0 kg</div>
+        </div>
+      </div>
+
+      <!-- Preview Table -->
+      <div class="mb-4">
+        <div class="text-xs font-black uppercase mb-1.5">Aperçu des trajets vélo enregistrés :</div>
+        <div class="max-h-48 overflow-y-auto border-2 border-pop-dark rounded-xl bg-white">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-pop-dark text-white font-mono sticky top-0">
+              <tr>
+                <th class="p-2">Date</th>
+                <th class="p-2">Jour</th>
+                <th class="p-2">Trajet</th>
+                <th class="p-2 text-right">Distance</th>
+                <th class="p-2 text-right">CO2 Évité</th>
+              </tr>
+            </thead>
+            <tbody id="exportPreviewTableBody" class="divide-y divide-pop-dark/20 font-bold">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Export Buttons -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3 border-t-2 border-pop-dark">
+        <button onclick="generateExcelExport()" class="brutal-btn bg-pop-lime p-3 rounded-xl flex items-center gap-3 text-left">
+          <span class="text-2xl">📗</span>
+          <div>
+            <div class="font-black text-sm">Télécharger en Excel (.xlsx)</div>
+            <div class="text-[10px] font-bold text-slate-700">Feuille Trajets Vélo + Feuille Soldes Congés</div>
+          </div>
+        </button>
+
+        <button onclick="generatePdfExport()" class="brutal-btn bg-pop-cyan p-3 rounded-xl flex items-center gap-3 text-left">
+          <span class="text-2xl">📄</span>
+          <div>
+            <div class="font-black text-sm">Télécharger en PDF (.pdf)</div>
+            <div class="text-[10px] font-bold text-slate-700">Attestation sur l'honneur avec signature RH</div>
+          </div>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toastNotification" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none bg-pop-yellow border-3 border-pop-dark shadow-brutal px-4 py-2.5 rounded-xl flex items-center gap-2 font-black text-xs text-pop-dark">
+    <span>⚡</span>
+    <span id="toastMessage">Opération réussie</span>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- APPLICATION SCRIPTS                                                       -->
+  <!-- ========================================================================= -->
+  <script>
+    const APP_STORAGE_KEY = 'zenleave_app_data_v1';
+
+    let appData = {
+      preferences: {
+        year: 2026,
+        cpTotal: 25,
+        rttTotal: 10,
+        ancTotal: 2,
+        bikeDailyKm: 14.0,
+        userName: '',
+        userCompany: ''
+      },
+      days: {}
+    };
+
+    let currentViewDate = new Date();
+    let currentViewMode = 'HEATMAP';
+    let activeQuickTool = null;
+
+    const MONTH_NAMES = [
+      "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
+      "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
+    ];
+
+    const TYPE_COLORS = {
+      'CP': '#38E1FF',         // Cyan
+      'RTT': '#46FF87',        // Lime
+      'ANCIENNETE': '#B794F4', // Purple
+      'SANS_SOLDE': '#FF5C5C', // Coral
+      'MALADIE': '#FFA726',    // Orange
+      'TRAVAILLE': '#FFFFFF'   // White
+    };
+
+    // --- Normalize day periods (Matin & Après-midi) ---
+    function getDayPeriods(dayData) {
+      if (!dayData) return { matin: 'TRAVAILLE', aprem: 'TRAVAILLE' };
+      if (dayData.matin && dayData.aprem) {
+        return { matin: dayData.matin, aprem: dayData.aprem };
+      }
+      // Backward compatibility with legacy format (type + duration)
+      const type = dayData.type || 'TRAVAILLE';
+      if (type === 'TRAVAILLE') return { matin: 'TRAVAILLE', aprem: 'TRAVAILLE' };
+      
+      if (dayData.duration === '0.5-matin') {
+        return { matin: type, aprem: 'TRAVAILLE' };
+      } else if (dayData.duration === '0.5-aprem') {
+        return { matin: 'TRAVAILLE', aprem: type };
+      }
+      return { matin: type, aprem: type };
+    }
+
+    // --- French public holidays ---
+    function getFrenchHolidays(year) {
+      const holidays = {};
+      holidays[`${year}-01-01`] = "Jour de l'An";
+      holidays[`${year}-05-01`] = "Fête du Travail";
+      holidays[`${year}-05-08`] = "Victoire 1945";
+      holidays[`${year}-07-14`] = "Fête Nationale";
+      holidays[`${year}-08-15`] = "Assomption";
+      holidays[`${year}-11-01`] = "Toussaint";
+      holidays[`${year}-11-11`] = "Armistice 1918";
+      holidays[`${year}-12-25`] = "Noël";
+
+      const a = year % 19;
+      const b = Math.floor(year / 100);
+      const c = year % 100;
+      const d = Math.floor(b / 4);
+      const e = b % 4;
+      const f = Math.floor((b + 8) / 25);
+      const g = Math.floor((b - f + 1) / 3);
+      const h = (19 * a + b - d - g + 15) % 30;
+      const i = Math.floor(c / 4);
+      const k = c % 4;
+      const l = (32 + 2 * e + 2 * i - h - k) % 7;
+      const m = Math.floor((a + 11 * h + 22 * l) / 451);
+      const month = Math.floor((h + l - 7 * m + 114) / 31);
+      const day = ((h + l - 7 * m + 114) % 31) + 1;
+      const easterDate = new Date(year, month - 1, day);
+
+      function addDays(d, daysCount) {
+        const copy = new Date(d);
+        copy.setDate(copy.getDate() + daysCount);
+        const y = copy.getFullYear();
+        const m = String(copy.getMonth() + 1).padStart(2, '0');
+        const dt = String(copy.getDate()).padStart(2, '0');
+        return `${y}-${m}-${dt}`;
+      }
+
+      holidays[addDays(easterDate, 1)] = "Lundi de Pâques";
+      holidays[addDays(easterDate, 39)] = "Ascension";
+      holidays[addDays(easterDate, 50)] = "Lundi de Pentecôte";
+
+      return holidays;
+    }
+
+    // --- Init & Storage ---
+    function initApp() {
+      const stored = localStorage.getItem(APP_STORAGE_KEY);
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          appData = {
+            preferences: { ...appData.preferences, ...parsed.preferences },
+            days: parsed.days || {}
+          };
+        } catch (e) {
+          console.error(e);
+        }
+      } else {
+        seedSampleData();
+      }
+
+      document.getElementById('badgeYearLabel').textContent = appData.preferences.year;
+      document.getElementById('heatmapYearTitle').textContent = appData.preferences.year;
+
+      syncPreferencesFields();
+      renderAllViews();
+      updateKpis();
+      lucide.createIcons();
+    }
+
+    function seedSampleData() {
+      const y = appData.preferences.year || 2026;
+      // Realistic starter days including half-days
+      appData.days[`${y}-05-15`] = { matin: 'RTT', aprem: 'TRAVAILLE', velo: false, note: 'Vendredi matin RTT' };
+      appData.days[`${y}-07-10`] = { matin: 'TRAVAILLE', aprem: 'CP', velo: false, note: 'Départ vacances' };
+      appData.days[`${y}-07-13`] = { matin: 'CP', aprem: 'CP', velo: false, note: 'Vacances été' };
+      appData.days[`${y}-07-14`] = { matin: 'CP', aprem: 'CP', velo: false, note: 'Vacances été' };
+      appData.days[`${y}-09-04`] = { matin: 'ANCIENNETE', aprem: 'TRAVAILLE', velo: false, note: 'Matinée ancienneté' };
+      
+      // Bike days
+      appData.days[`${y}-11-03`] = { matin: 'TRAVAILLE', aprem: 'TRAVAILLE', velo: true, veloTrip: 'AR', note: '' };
+      appData.days[`${y}-11-04`] = { matin: 'TRAVAILLE', aprem: 'TRAVAILLE', velo: true, veloTrip: 'AR', note: '' };
+      saveAppData();
+    }
+
+    function saveAppData() {
+      localStorage.setItem(APP_STORAGE_KEY, JSON.stringify(appData));
+    }
+
+    function syncPreferencesFields() {
+      document.getElementById('prefYear').value = appData.preferences.year || 2026;
+      document.getElementById('prefCpTotal').value = appData.preferences.cpTotal;
+      document.getElementById('prefRttTotal').value = appData.preferences.rttTotal;
+      document.getElementById('prefAncTotal').value = appData.preferences.ancTotal;
+      document.getElementById('prefBikeDailyKm').value = appData.preferences.bikeDailyKm;
+      document.getElementById('prefUserName').value = appData.preferences.userName || '';
+      document.getElementById('prefUserCompany').value = appData.preferences.userCompany || '';
+    }
+
+    // --- Switch Views ---
+    function switchView(mode) {
+      currentViewMode = mode;
+      
+      const vHeatmap = document.getElementById('viewHeatmapContainer');
+      const vCalendar = document.getElementById('viewCalendarContainer');
+      const vTimeline = document.getElementById('viewTimelineContainer');
+
+      const bHeatmap = document.getElementById('btnViewHeatmap');
+      const bCalendar = document.getElementById('btnViewCalendar');
+      const bTimeline = document.getElementById('btnViewTimeline');
+
+      vHeatmap.classList.add('hidden');
+      vCalendar.classList.add('hidden');
+      vTimeline.classList.add('hidden');
+
+      [bHeatmap, bCalendar, bTimeline].forEach(b => {
+        b.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition text-pop-dark hover:bg-white';
+      });
+
+      if (mode === 'HEATMAP') {
+        vHeatmap.classList.remove('hidden');
+        bHeatmap.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition bg-pop-dark text-white';
+        renderHeatmap();
+      } else if (mode === 'CALENDAR') {
+        vCalendar.classList.remove('hidden');
+        bCalendar.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition bg-pop-dark text-white';
+        renderCalendar();
+      } else if (mode === 'TIMELINE') {
+        vTimeline.classList.remove('hidden');
+        bTimeline.className = 'px-3 py-1.5 rounded-lg text-xs font-bold transition bg-pop-dark text-white';
+        renderTimeline();
+      }
+      lucide.createIcons();
+    }
+
+    function renderAllViews() {
+      renderHeatmap();
+      renderCalendar();
+      renderTimeline();
+    }
+
+    // --- 1. RENDER HEATMAP 365 JOURS (WITH HALF-DAY SPLIT) ---
+    function renderHeatmap() {
+      const year = Number(appData.preferences.year) || 2026;
+      const holidays = getFrenchHolidays(year);
+      const container = document.getElementById('heatmapGrid');
+      container.innerHTML = '';
+
+      const monthsWrapper = document.createElement('div');
+      monthsWrapper.className = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3';
+
+      let totalWorkingDays = 0;
+      let totalLeaves = 0;
+      let totalBikeDays = 0;
+
+      for (let m = 0; m < 12; m++) {
+        const monthBox = document.createElement('div');
+        monthBox.className = 'bg-white border-2 border-pop-dark rounded-xl p-2.5 shadow-brutal-sm';
+
+        const monthTitle = document.createElement('div');
+        monthTitle.className = 'text-xs font-black uppercase pb-1 mb-2 border-b-2 border-pop-dark flex justify-between items-center';
+        monthTitle.innerHTML = `<span>${MONTH_NAMES[m]}</span><span class="text-[10px] text-slate-500">${year}</span>`;
+        monthBox.appendChild(monthTitle);
+
+        const daysGrid = document.createElement('div');
+        daysGrid.className = 'grid grid-cols-7 gap-1 text-center';
+
+        ['L','M','M','J','V','S','D'].forEach(wd => {
+          const wdh = document.createElement('div');
+          wdh.className = 'text-[9px] font-black text-slate-400 mb-0.5';
+          wdh.textContent = wd;
+          daysGrid.appendChild(wdh);
+        });
+
+        const firstDay = new Date(year, m, 1);
+        const startingDay = (firstDay.getDay() + 6) % 7;
+        const daysInMonth = new Date(year, m + 1, 0).getDate();
+
+        for (let pad = 0; pad < startingDay; pad++) {
+          const empty = document.createElement('div');
+          empty.className = 'w-4 h-4 rounded-sm opacity-10 bg-slate-300 pointer-events-none mx-auto';
+          daysGrid.appendChild(empty);
+        }
+
+        for (let d = 1; d <= daysInMonth; d++) {
+          const dateStr = `${year}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+          const dayData = appData.days[dateStr];
+          const isHoliday = holidays[dateStr];
+          const curDayOfWeek = (startingDay + (d - 1)) % 7;
+          const isWeekend = curDayOfWeek === 5 || curDayOfWeek === 6;
+
+          if (!isWeekend && !isHoliday) {
+            totalWorkingDays++;
+          }
+
+          const cell = document.createElement('div');
+          cell.className = 'heatmap-cell mx-auto flex items-center justify-center text-[8px] font-black font-mono';
+          cell.dataset.date = dateStr;
+
+          const periods = getDayPeriods(dayData);
+
+          if (isHoliday) {
+            cell.style.backgroundColor = '#FF6B8B';
+            cell.style.color = '#fff';
+            cell.title = `🎉 ${isHoliday}`;
+          } else if (periods.matin !== 'TRAVAILLE' || periods.aprem !== 'TRAVAILLE') {
+            const mType = periods.matin;
+            const aType = periods.aprem;
+
+            if (mType !== 'TRAVAILLE') totalLeaves += 0.5;
+            if (aType !== 'TRAVAILLE') totalLeaves += 0.5;
+
+            const colorMatin = TYPE_COLORS[mType] || '#FFFFFF';
+            const colorAprem = TYPE_COLORS[aType] || '#FFFFFF';
+
+            if (mType === aType) {
+              cell.style.backgroundColor = colorMatin;
+            } else {
+              // Bicolor vertical or diagonal split for half-day!
+              cell.style.background = `linear-gradient(90deg, ${colorMatin} 50%, ${colorAprem} 50%)`;
+            }
+          } else if (isWeekend) {
+            cell.style.backgroundColor = '#E5E1D4';
+          } else {
+            cell.style.backgroundColor = '#FFFFFF';
+          }
+
+          if (dayData && dayData.velo) {
+            totalBikeDays++;
+            cell.innerHTML = '•';
+            cell.style.boxShadow = 'inset 0 0 0 2px #FFE600';
+          }
+
+          cell.onmouseenter = (e) => showHeatmapTooltip(e, dateStr, dayData, isHoliday);
+          cell.onmouseleave = hideHeatmapTooltip;
+          cell.onclick = () => handleDayClick(dateStr);
+
+          daysGrid.appendChild(cell);
+        }
+
+        monthBox.appendChild(daysGrid);
+        monthsWrapper.appendChild(monthBox);
+      }
+
+      container.appendChild(monthsWrapper);
+
+      document.getElementById('statWorkingDays').textContent = totalWorkingDays;
+      document.getElementById('statTotalLeaveDays').textContent = totalLeaves % 1 === 0 ? totalLeaves : totalLeaves.toFixed(1);
+      const ratio = totalWorkingDays > 0 ? Math.round((totalBikeDays / totalWorkingDays) * 100) : 0;
+      document.getElementById('statBikeRatio').textContent = `${ratio}% (${totalBikeDays} j)`;
+    }
+
+    function showHeatmapTooltip(e, dateStr, dayData, isHoliday) {
+      const tooltip = document.getElementById('heatmapTooltip');
+      const dObj = new Date(dateStr + 'T00:00:00');
+      const formatted = dObj.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+
+      let text = `<b>${formatted}</b>`;
+      if (isHoliday) text += `<br>🎉 ${isHoliday}`;
+
+      const periods = getDayPeriods(dayData);
+      if (periods.matin !== 'TRAVAILLE' || periods.aprem !== 'TRAVAILLE') {
+        if (periods.matin === periods.aprem) {
+          text += `<br>🌴 ${periods.matin} (Journée entière)`;
+        } else {
+          if (periods.matin !== 'TRAVAILLE') text += `<br>🌅 Matin : ½j ${periods.matin}`;
+          if (periods.aprem !== 'TRAVAILLE') text += `<br>🌇 Aprem : ½j ${periods.aprem}`;
+        }
+      }
+
+      if (dayData && dayData.velo) {
+        text += `<br>🚲 Trajet Vélo (${dayData.veloTrip || 'AR'})`;
+      }
+      if (dayData && dayData.note) {
+        text += `<br><i>"${escapeHtml(dayData.note)}"</i>`;
+      }
+
+      tooltip.innerHTML = text;
+      tooltip.style.left = (e.clientX + 12) + 'px';
+      tooltip.style.top = (e.clientY + 12) + 'px';
+      tooltip.classList.remove('hidden');
+    }
+
+    function hideHeatmapTooltip() {
+      document.getElementById('heatmapTooltip').classList.add('hidden');
+    }
+
+    function goToHeatmapToday() {
+      const today = new Date();
+      const todayStr = today.toISOString().slice(0, 10);
+      const cell = document.querySelector(`.heatmap-cell[data-date="${todayStr}"]`);
+      if (cell) {
+        cell.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        cell.style.outline = '3px solid #111827';
+        setTimeout(() => cell.style.outline = 'none', 1800);
+      }
+    }
+
+    // --- 2. RENDER CALENDRIER MENSUEL (WITH HALF-DAYS) ---
+    function renderCalendar() {
+      const year = currentViewDate.getFullYear();
+      const month = currentViewDate.getMonth();
+      document.getElementById('currentMonthYearLabel').textContent = `${MONTH_NAMES[month]} ${year}`;
+
+      const holidays = getFrenchHolidays(year);
+      const grid = document.getElementById('calendarGrid');
+      grid.innerHTML = '';
+
+      const firstDayOfMonth = new Date(year, month, 1);
+      const startingDay = (firstDayOfMonth.getDay() + 6) % 7;
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+      const today = new Date();
+      const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
+      const todayDate = today.getDate();
+
+      for (let i = startingDay - 1; i >= 0; i--) {
+        const d = daysInPrevMonth - i;
+        const cell = document.createElement('div');
+        cell.className = 'calendar-card-day rounded-xl p-2 bg-slate-200/50 border-2 border-pop-dark/30 opacity-30 select-none';
+        cell.innerHTML = `<span class="text-xs font-bold font-mono">${d}</span>`;
+        grid.appendChild(cell);
+      }
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const dayOfWeek = (startingDay + (d - 1)) % 7;
+        const isWeekend = dayOfWeek === 5 || dayOfWeek === 6;
+        const isHoliday = holidays[dateKey];
+        const dayData = appData.days[dateKey];
+        const isToday = isCurrentMonth && d === todayDate;
+
+        const cell = document.createElement('div');
+        cell.className = `calendar-card-day rounded-xl p-2.5 flex flex-col justify-between cursor-pointer ${
+          isWeekend ? 'bg-pop-gray' : 'bg-white'
+        } ${isToday ? 'ring-4 ring-pop-yellow' : ''}`;
+
+        cell.onclick = () => handleDayClick(dateKey);
+
+        let headerHtml = `
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-black font-mono ${isToday ? 'bg-pop-yellow px-1.5 border border-pop-dark rounded' : ''}">
+              ${d}
+            </span>
+            <div class="flex items-center gap-1">
+              ${dayData && dayData.velo ? `<span class="sticker-badge bg-pop-yellow">🚲</span>` : ''}
+              ${isHoliday ? `<span class="sticker-badge bg-pop-pink text-white">🎉</span>` : ''}
+            </div>
+          </div>
+        `;
+
+        // Badges for Morning / Afternoon
+        const periods = getDayPeriods(dayData);
+        let badgeHtml = '<div class="my-auto space-y-1">';
+
+        if (isHoliday) {
+          badgeHtml += `<div class="sticker-badge bg-pop-pink text-white text-[9px] truncate w-full">${isHoliday}</div>`;
+        }
+
+        const getBg = (type) => ({
+          'CP': 'bg-pop-cyan text-pop-dark',
+          'RTT': 'bg-pop-lime text-pop-dark',
+          'ANCIENNETE': 'bg-pop-purple text-white',
+          'SANS_SOLDE': 'bg-pop-coral text-white',
+          'MALADIE': 'bg-pop-orange text-pop-dark'
+        }[type] || 'bg-white');
+
+        if (periods.matin !== 'TRAVAILLE' || periods.aprem !== 'TRAVAILLE') {
+          if (periods.matin === periods.aprem) {
+            // Whole day
+            badgeHtml += `<div class="sticker-badge ${getBg(periods.matin)} text-[10px] truncate w-full flex justify-between"><span>${periods.matin}</span><span>(1j)</span></div>`;
+          } else {
+            // Half day morning
+            if (periods.matin !== 'TRAVAILLE') {
+              badgeHtml += `<div class="sticker-badge ${getBg(periods.matin)} text-[9px] truncate w-full flex justify-between"><span>🌅 ½ ${periods.matin}</span><span>Matin</span></div>`;
+            }
+            // Half day afternoon
+            if (periods.aprem !== 'TRAVAILLE') {
+              badgeHtml += `<div class="sticker-badge ${getBg(periods.aprem)} text-[9px] truncate w-full flex justify-between"><span>🌇 ½ ${periods.aprem}</span><span>Aprem</span></div>`;
+            }
+          }
+        }
+
+        badgeHtml += '</div>';
+
+        let noteHtml = '';
+        if (dayData && dayData.note) {
+          noteHtml = `<div class="text-[9px] font-mono italic text-slate-500 truncate border-t border-pop-dark/20 pt-1">${escapeHtml(dayData.note)}</div>`;
+        }
+
+        cell.innerHTML = headerHtml + badgeHtml + noteHtml;
+        grid.appendChild(cell);
+      }
+
+      const totalCells = startingDay + daysInMonth;
+      const remainder = (7 - (totalCells % 7)) % 7;
+      for (let nextDay = 1; nextDay <= remainder; nextDay++) {
+        const cell = document.createElement('div');
+        cell.className = 'calendar-card-day rounded-xl p-2 bg-slate-200/50 border-2 border-pop-dark/30 opacity-30 select-none';
+        cell.innerHTML = `<span class="text-xs font-bold font-mono">${nextDay}</span>`;
+        grid.appendChild(cell);
+      }
+    }
+
+    function changeMonth(direction) {
+      currentViewDate.setMonth(currentViewDate.getMonth() + direction);
+      renderCalendar();
+      updateKpis();
+    }
+
+    function goToToday() {
+      currentViewDate = new Date();
+      renderCalendar();
+      updateKpis();
+    }
+
+    // --- 3. RENDER TIMELINE / FRISE CHRONOLOGIQUE ---
+    function renderTimeline() {
+      const container = document.getElementById('timelinePeriodsList');
+      container.innerHTML = '';
+
+      const dates = Object.keys(appData.days).sort();
+      if (dates.length === 0) {
+        container.innerHTML = `
+          <div class="p-8 text-center bg-white border-2 border-pop-dark rounded-xl font-bold text-slate-500">
+            Aucun événement enregistré. Posez des congés ou trajets vélo pour voir la frise se remplir !
+          </div>
+        `;
+        return;
+      }
+
+      dates.forEach(dStr => {
+        const item = appData.days[dStr];
+        const dObj = new Date(dStr + 'T00:00:00');
+        const formattedDate = dObj.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+        const periods = getDayPeriods(item);
+
+        const row = document.createElement('div');
+        row.className = 'bg-white brutal-box p-3 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3';
+
+        const getBg = (type) => ({
+          'CP': 'bg-pop-cyan text-pop-dark',
+          'RTT': 'bg-pop-lime text-pop-dark',
+          'ANCIENNETE': 'bg-pop-purple text-white',
+          'SANS_SOLDE': 'bg-pop-coral text-white',
+          'MALADIE': 'bg-pop-orange text-pop-dark'
+        }[type] || 'bg-white');
+
+        let badges = '';
+        if (periods.matin !== 'TRAVAILLE' || periods.aprem !== 'TRAVAILLE') {
+          if (periods.matin === periods.aprem) {
+            badges += `<span class="sticker-badge ${getBg(periods.matin)}">${periods.matin} (1 jour)</span>`;
+          } else {
+            if (periods.matin !== 'TRAVAILLE') {
+              badges += `<span class="sticker-badge ${getBg(periods.matin)}">🌅 ½ ${periods.matin} (Matin)</span>`;
+            }
+            if (periods.aprem !== 'TRAVAILLE') {
+              badges += `<span class="sticker-badge ${getBg(periods.aprem)}">🌇 ½ ${periods.aprem} (Aprem)</span>`;
+            }
+          }
+        } else {
+          badges = `<span class="sticker-badge bg-white">TRAVAILLÉ</span>`;
+        }
+
+        let veloBadge = item.velo ? `<span class="sticker-badge bg-pop-yellow">🚲 VÉLO (${item.veloTrip || 'AR'})</span>` : '';
+
+        row.innerHTML = `
+          <div class="flex items-center gap-3">
+            <span class="font-mono text-xs font-black bg-pop-gray px-2 py-1 border-2 border-pop-dark rounded">
+              ${dStr}
+            </span>
+            <span class="font-bold text-sm capitalize">${formattedDate}</span>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            ${badges}
+            ${veloBadge}
+            ${item.note ? `<span class="text-xs font-mono text-slate-600 bg-pop-gray px-2 py-0.5 rounded border border-pop-dark">${escapeHtml(item.note)}</span>` : ''}
+            <button onclick="handleDayClick('${dStr}')" class="brutal-btn bg-pop-yellow text-[10px] px-2 py-1 rounded">Éditer</button>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+    }
+
+    // --- QUICK PAINT MODE (WITH 1/2 DAY TOOLS) ---
+    function toggleQuickPaintBar(force) {
+      const bar = document.getElementById('quickPaintBar');
+      const btn = document.getElementById('btnQuickPaintTrigger');
+      const isVisible = force !== undefined ? force : bar.classList.contains('hidden');
+
+      if (isVisible) {
+        bar.classList.remove('hidden');
+        btn.classList.add('tool-active');
+        if (!activeQuickTool) selectQuickTool('CP_JOUR');
+      } else {
+        bar.classList.add('hidden');
+        btn.classList.remove('tool-active');
+        activeQuickTool = null;
+        document.querySelectorAll('.quick-tool-btn').forEach(b => b.classList.remove('tool-active'));
+      }
+    }
+
+    function selectQuickTool(tool) {
+      activeQuickTool = tool;
+      document.querySelectorAll('.quick-tool-btn').forEach(b => {
+        if (b.dataset.tool === tool) {
+          b.classList.add('tool-active');
+        } else {
+          b.classList.remove('tool-active');
+        }
+      });
+      showToast(`Outil pinceau : ${tool}`);
+    }
+
+    function handleDayClick(dateKey) {
+      if (activeQuickTool) {
+        applyQuickTool(dateKey, activeQuickTool);
+        return;
+      }
+      openDayModal(dateKey);
+    }
+
+    function applyQuickTool(dateKey, tool) {
+      if (!appData.days[dateKey]) {
+        appData.days[dateKey] = { matin: 'TRAVAILLE', aprem: 'TRAVAILLE', velo: false, veloTrip: 'AR', note: '' };
+      }
+      const d = appData.days[dateKey];
+      const cur = getDayPeriods(d);
+
+      if (tool === 'CLEAR') {
+        delete appData.days[dateKey];
+        showToast('Jour réinitialisé');
+      } else if (tool === 'VELO_TOGGLE') {
+        d.velo = !d.velo;
+        showToast(d.velo ? '🚲 Vélo activé !' : 'Vélo retiré');
+      } else if (tool === 'CP_JOUR') {
+        d.matin = 'CP'; d.aprem = 'CP';
+        showToast('🌴 1j CP posé');
+      } else if (tool === 'CP_MATIN') {
+        d.matin = (cur.matin === 'CP') ? 'TRAVAILLE' : 'CP';
+        d.aprem = cur.aprem;
+        showToast('🌅 ½ CP Matin basculé');
+      } else if (tool === 'CP_APREM') {
+        d.matin = cur.matin;
+        d.aprem = (cur.aprem === 'CP') ? 'TRAVAILLE' : 'CP';
+        showToast('🌇 ½ CP Aprem basculé');
+      } else if (tool === 'RTT_JOUR') {
+        d.matin = 'RTT'; d.aprem = 'RTT';
+        showToast('⚡ 1j RTT posé');
+      } else if (tool === 'RTT_MATIN') {
+        d.matin = (cur.matin === 'RTT') ? 'TRAVAILLE' : 'RTT';
+        d.aprem = cur.aprem;
+        showToast('🌅 ½ RTT Matin basculé');
+      } else if (tool === 'RTT_APREM') {
+        d.matin = cur.matin;
+        d.aprem = (cur.aprem === 'RTT') ? 'TRAVAILLE' : 'RTT';
+        showToast('🌇 ½ RTT Aprem basculé');
+      } else if (tool === 'ANC_JOUR') {
+        d.matin = 'ANCIENNETE'; d.aprem = 'ANCIENNETE';
+        showToast('🎖️ 1j Ancienneté posé');
+      } else if (tool === 'ANC_MATIN') {
+        d.matin = (cur.matin === 'ANCIENNETE') ? 'TRAVAILLE' : 'ANCIENNETE';
+        d.aprem = cur.aprem;
+        showToast('🌅 ½ Ancienneté Matin');
+      } else if (tool === 'ANC_APREM') {
+        d.matin = cur.matin;
+        d.aprem = (cur.aprem === 'ANCIENNETE') ? 'TRAVAILLE' : 'ANCIENNETE';
+        showToast('🌇 ½ Ancienneté Aprem');
+      } else if (tool === 'SANS_SOLDE_JOUR') {
+        d.matin = 'SANS_SOLDE'; d.aprem = 'SANS_SOLDE';
+        showToast('⏳ Sans solde posé');
+      } else if (tool === 'MALADIE_JOUR') {
+        d.matin = 'MALADIE'; d.aprem = 'MALADIE';
+        showToast('🏥 Maladie posé');
+      }
+
+      // Cleanup if entirely worked with no bike or note
+      if (d.matin === 'TRAVAILLE' && d.aprem === 'TRAVAILLE' && !d.velo && !d.note) {
+        delete appData.days[dateKey];
+      }
+
+      saveAppData();
+      renderAllViews();
+      updateKpis();
+    }
+
+    // --- DAY MODAL OPERATIONS ---
+    function openDayModal(dateKey) {
+      document.getElementById('editDateKey').value = dateKey;
+      const dObj = new Date(dateKey + 'T00:00:00');
+      document.getElementById('dayModalDateTitle').textContent = dObj.toLocaleDateString('fr-FR', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      });
+
+      const dayData = appData.days[dateKey];
+      const periods = getDayPeriods(dayData);
+
+      // Select Matin radio
+      document.querySelectorAll('input[name="dayMatin"]').forEach(r => {
+        r.checked = (r.value === periods.matin);
+      });
+
+      // Select Aprem radio
+      document.querySelectorAll('input[name="dayAprem"]').forEach(r => {
+        r.checked = (r.value === periods.aprem);
+      });
+
+      document.getElementById('editVeloCheck').checked = Boolean(dayData && dayData.velo);
+      document.getElementById('editVeloTripType').value = (dayData && dayData.veloTrip) || 'AR';
+      document.getElementById('editDayNote').value = (dayData && dayData.note) || '';
+
+      document.getElementById('modalDayEdit').classList.remove('hidden');
+    }
+
+    function setModalPreset(matinVal, apremVal) {
+      document.querySelectorAll('input[name="dayMatin"]').forEach(r => {
+        r.checked = (r.value === matinVal);
+      });
+      document.querySelectorAll('input[name="dayAprem"]').forEach(r => {
+        r.checked = (r.value === apremVal);
+      });
+    }
+
+    function closeDayModal() {
+      document.getElementById('modalDayEdit').classList.add('hidden');
+    }
+
+    function saveDayDetails(event) {
+      event.preventDefault();
+      const dateKey = document.getElementById('editDateKey').value;
+      if (!dateKey) return;
+
+      const matin = document.querySelector('input[name="dayMatin"]:checked').value;
+      const aprem = document.querySelector('input[name="dayAprem"]:checked').value;
+      const isVelo = document.getElementById('editVeloCheck').checked;
+      const veloTrip = document.getElementById('editVeloTripType').value;
+      const note = document.getElementById('editDayNote').value.trim();
+
+      if (matin === 'TRAVAILLE' && aprem === 'TRAVAILLE' && !isVelo && !note) {
+        delete appData.days[dateKey];
+      } else {
+        appData.days[dateKey] = {
+          matin: matin,
+          aprem: aprem,
+          velo: isVelo,
+          veloTrip: veloTrip,
+          note: note
+        };
+      }
+
+      saveAppData();
+      renderAllViews();
+      updateKpis();
+      closeDayModal();
+      showToast('Journée enregistrée');
+    }
+
+    function clearCurrentDay() {
+      const dateKey = document.getElementById('editDateKey').value;
+      if (dateKey && appData.days[dateKey]) {
+        delete appData.days[dateKey];
+        saveAppData();
+        renderAllViews();
+        updateKpis();
+      }
+      closeDayModal();
+      showToast('Journée effacée');
+    }
+
+    // --- PREFERENCES MODAL ---
+    function openPreferencesModal() {
+      syncPreferencesFields();
+      document.getElementById('modalPreferences').classList.remove('hidden');
+    }
+    function closePreferencesModal() {
+      document.getElementById('modalPreferences').classList.add('hidden');
+    }
+
+    function savePreferences(event) {
+      event.preventDefault();
+      appData.preferences.year = parseInt(document.getElementById('prefYear').value, 10) || 2026;
+      appData.preferences.cpTotal = parseFloat(document.getElementById('prefCpTotal').value) || 0;
+      appData.preferences.rttTotal = parseFloat(document.getElementById('prefRttTotal').value) || 0;
+      appData.preferences.ancTotal = parseFloat(document.getElementById('prefAncTotal').value) || 0;
+      appData.preferences.bikeDailyKm = parseFloat(document.getElementById('prefBikeDailyKm').value) || 14.0;
+      appData.preferences.userName = document.getElementById('prefUserName').value.trim();
+      appData.preferences.userCompany = document.getElementById('prefUserCompany').value.trim();
+
+      document.getElementById('badgeYearLabel').textContent = appData.preferences.year;
+      document.getElementById('heatmapYearTitle').textContent = appData.preferences.year;
+
+      saveAppData();
+      renderAllViews();
+      updateKpis();
+      closePreferencesModal();
+      showToast('Préférences enregistrées');
+    }
+
+    // --- KPI CALCULATIONS (WITH EXACT 0.5 INCREMENTS) ---
+    function updateKpis() {
+      const year = Number(appData.preferences.year) || 2026;
+      let cpCount = 0, rttCount = 0, ancCount = 0, sansSoldeCount = 0, maladieCount = 0;
+      let totalBikeDays = 0, totalBikeKm = 0;
+
+      const dailyKm = Number(appData.preferences.bikeDailyKm) || 14;
+
+      for (const [dateStr, day] of Object.entries(appData.days)) {
+        if (dateStr.startsWith(String(year))) {
+          const periods = getDayPeriods(day);
+
+          // Morning 0.5
+          if (periods.matin === 'CP') cpCount += 0.5;
+          else if (periods.matin === 'RTT') rttCount += 0.5;
+          else if (periods.matin === 'ANCIENNETE') ancCount += 0.5;
+          else if (periods.matin === 'SANS_SOLDE') sansSoldeCount += 0.5;
+          else if (periods.matin === 'MALADIE') maladieCount += 0.5;
+
+          // Afternoon 0.5
+          if (periods.aprem === 'CP') cpCount += 0.5;
+          else if (periods.aprem === 'RTT') rttCount += 0.5;
+          else if (periods.aprem === 'ANCIENNETE') ancCount += 0.5;
+          else if (periods.aprem === 'SANS_SOLDE') sansSoldeCount += 0.5;
+          else if (periods.aprem === 'MALADIE') maladieCount += 0.5;
+
+          if (day.velo) {
+            totalBikeDays += 1;
+            const factor = day.veloTrip === 'ALLER' || day.veloTrip === 'RETOUR' ? 0.5 : 1.0;
+            totalBikeKm += dailyKm * factor;
+          }
+        }
+      }
+
+      // CP
+      const cpTotal = Number(appData.preferences.cpTotal) || 0;
+      const cpRemaining = Math.max(0, cpTotal - cpCount);
+      document.getElementById('kpiCpRemaining').textContent = cpRemaining % 1 === 0 ? cpRemaining : cpRemaining.toFixed(1);
+      document.getElementById('kpiCpTaken').textContent = cpCount % 1 === 0 ? cpCount : cpCount.toFixed(1);
+      document.getElementById('kpiCpTotal').textContent = cpTotal;
+      document.getElementById('barCp').style.width = `${Math.min(100, (cpCount / (cpTotal || 1)) * 100)}%`;
+
+      // RTT
+      const rttTotal = Number(appData.preferences.rttTotal) || 0;
+      const rttRemaining = Math.max(0, rttTotal - rttCount);
+      document.getElementById('kpiRttRemaining').textContent = rttRemaining % 1 === 0 ? rttRemaining : rttRemaining.toFixed(1);
+      document.getElementById('kpiRttTaken').textContent = rttCount % 1 === 0 ? rttCount : rttCount.toFixed(1);
+      document.getElementById('kpiRttTotal').textContent = rttTotal;
+      document.getElementById('barRtt').style.width = `${Math.min(100, (rttCount / (rttTotal || 1)) * 100)}%`;
+
+      // Ancienneté
+      const ancTotal = Number(appData.preferences.ancTotal) || 0;
+      const ancRemaining = Math.max(0, ancTotal - ancCount);
+      document.getElementById('kpiAncRemaining').textContent = ancRemaining % 1 === 0 ? ancRemaining : ancRemaining.toFixed(1);
+      document.getElementById('kpiAncTaken').textContent = ancCount % 1 === 0 ? ancCount : ancCount.toFixed(1);
+      document.getElementById('kpiAncTotal').textContent = ancTotal;
+      document.getElementById('barAnc').style.width = `${Math.min(100, (ancCount / (ancTotal || 1)) * 100)}%`;
+
+      // Sans Solde & Maladie
+      document.getElementById('kpiSansSoldeTaken').textContent = sansSoldeCount % 1 === 0 ? sansSoldeCount : sansSoldeCount.toFixed(1);
+      document.getElementById('kpiMaladieTaken').textContent = maladieCount % 1 === 0 ? maladieCount : maladieCount.toFixed(1);
+
+      // Vélo
+      const co2Saved = totalBikeKm * 0.15;
+      document.getElementById('kpiVeloDays').textContent = totalBikeDays;
+      document.getElementById('kpiVeloKm').textContent = Math.round(totalBikeKm);
+      document.getElementById('kpiVeloCo2').textContent = `${Math.round(co2Saved)} kg`;
+    }
+
+    // --- EXPORTS MODAL & LOGIC ---
+    function openExportModal() {
+      updateExportPreview();
+      document.getElementById('modalExport').classList.remove('hidden');
+    }
+    function closeExportModal() {
+      document.getElementById('modalExport').classList.add('hidden');
+    }
+
+    function getFilteredBikeDays() {
+      const scope = document.getElementById('exportFilterScope').value;
+      const year = currentViewDate.getFullYear();
+      const monthPrefix = `${year}-${String(currentViewDate.getMonth() + 1).padStart(2, '0')}`;
+      const dailyKm = Number(appData.preferences.bikeDailyKm) || 14.0;
+
+      const entries = [];
+      const sortedDates = Object.keys(appData.days).sort();
+
+      for (const dStr of sortedDates) {
+        const item = appData.days[dStr];
+        if (!item.velo) continue;
+
+        if (scope === 'CURRENT_MONTH' && !dStr.startsWith(monthPrefix)) continue;
+        if (scope === 'ALL' && !dStr.startsWith(String(year))) continue;
+
+        const dObj = new Date(dStr + 'T00:00:00');
+        const factor = (item.veloTrip === 'ALLER' || item.veloTrip === 'RETOUR') ? 0.5 : 1.0;
+        const km = dailyKm * factor;
+        const co2Kg = km * 0.15;
+
+        entries.push({
+          date: dStr,
+          dateFormatted: dObj.toLocaleDateString('fr-FR'),
+          dayName: dObj.toLocaleDateString('fr-FR', { weekday: 'long' }),
+          tripType: item.veloTrip === 'ALLER' ? 'Aller simple' : (item.veloTrip === 'RETOUR' ? 'Retour simple' : 'Aller-Retour'),
+          km: km,
+          co2: co2Kg,
+          note: item.note || ''
+        });
+      }
+      return entries;
+    }
+
+    function updateExportPreview() {
+      const list = getFilteredBikeDays();
+      const totalKm = list.reduce((a, c) => a + c.km, 0);
+      const totalCo2 = list.reduce((a, c) => a + c.co2, 0);
+
+      document.getElementById('previewCountBadge').textContent = `${list.length} JOURS`;
+      document.getElementById('exportStatDays').textContent = list.length;
+      document.getElementById('exportStatKm').textContent = `${Math.round(totalKm)} km`;
+      document.getElementById('exportStatCo2').textContent = `${Math.round(totalCo2)} kg`;
+
+      const tbody = document.getElementById('exportPreviewTableBody');
+      tbody.innerHTML = '';
+
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-slate-500 font-bold">Aucun trajet vélo sur cette sélection.</td></tr>`;
+        return;
+      }
+
+      list.slice(0, 10).forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="p-2 font-mono text-xs">${r.dateFormatted}</td>
+          <td class="p-2 capitalize">${r.dayName}</td>
+          <td class="p-2"><span class="sticker-badge bg-pop-yellow text-[9px]">${r.tripType}</span></td>
+          <td class="p-2 text-right">${r.km.toFixed(1)} km</td>
+          <td class="p-2 text-right font-black text-pop-dark">${r.co2.toFixed(1)} kg</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function generateExcelExport() {
+      const bikeList = getFilteredBikeDays();
+      const scope = document.getElementById('exportFilterScope').value;
+      const year = currentViewDate.getFullYear();
+      const monthLabel = MONTH_NAMES[currentViewDate.getMonth()];
+      const userName = appData.preferences.userName || 'Salarié';
+
+      const bikeData = [
+        ["BILAN DES DÉPLACEMENTS À VÉLO"],
+        [`Salarié : ${userName}`, `Entreprise : ${appData.preferences.userCompany || '-'}`],
+        [`Période : ${scope === 'CURRENT_MONTH' ? `${monthLabel} ${year}` : `Année ${year}`}`],
+        [],
+        ["Date", "Jour", "Trajet", "Distance (km)", "CO2 évité (kg)", "Commentaire"]
+      ];
+
+      bikeList.forEach(item => {
+        bikeData.push([
+          item.dateFormatted,
+          item.dayName,
+          item.tripType,
+          item.km,
+          Number(item.co2.toFixed(2)),
+          item.note
+        ]);
+      });
+
+      const totalKm = bikeList.reduce((acc, c) => acc + c.km, 0);
+      const totalCo2 = bikeList.reduce((acc, c) => acc + c.co2, 0);
+      bikeData.push([]);
+      bikeData.push(["TOTAL", `${bikeList.length} trajets`, "", totalKm, Number(totalCo2.toFixed(2)), ""]);
+
+      const wb = XLSX.utils.book_new();
+      const wsBike = XLSX.utils.aoa_to_sheet(bikeData);
+      XLSX.utils.book_append_sheet(wb, wsBike, "Bilan Vélo");
+
+      // Leave Sheet
+      const leaveData = [
+        ["SYNTHÈSE DES CONGÉS (AVEC DEMI-JOURNÉES)"],
+        [`Salarié : ${userName}`, `Année : ${year}`],
+        [],
+        ["Type de Congé", "Acquis", "Posés (jours)", "Solde Restant (jours)"],
+        ["Congés Payés (CP)", appData.preferences.cpTotal, document.getElementById('kpiCpTaken').textContent, document.getElementById('kpiCpRemaining').textContent],
+        ["RTT", appData.preferences.rttTotal, document.getElementById('kpiRttTaken').textContent, document.getElementById('kpiRttRemaining').textContent],
+        ["Congés Ancienneté", appData.preferences.ancTotal, document.getElementById('kpiAncTaken').textContent, document.getElementById('kpiAncRemaining').textContent]
+      ];
+      const wsLeave = XLSX.utils.aoa_to_sheet(leaveData);
+      XLSX.utils.book_append_sheet(wb, wsLeave, "Soldes Congés");
+
+      XLSX.writeFile(wb, `Bilan_Velo_Pop_${year}.xlsx`);
+      showToast('Fichier Excel téléchargé !');
+    }
+
+    function generatePdfExport() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      const bikeList = getFilteredBikeDays();
+      const scope = document.getElementById('exportFilterScope').value;
+      const year = currentViewDate.getFullYear();
+      const monthLabel = MONTH_NAMES[currentViewDate.getMonth()];
+      const userName = appData.preferences.userName || 'Salarié non spécifié';
+      const company = appData.preferences.userCompany || 'Non renseigné';
+
+      const totalKm = bikeList.reduce((acc, c) => acc + c.km, 0);
+      const totalCo2 = bikeList.reduce((acc, c) => acc + c.co2, 0);
+
+      doc.setFillColor(255, 230, 0);
+      doc.rect(0, 0, 210, 35, 'F');
+      doc.setDrawColor(17, 24, 39);
+      doc.setLineWidth(1.2);
+      doc.line(0, 35, 210, 35);
+
+      doc.setTextColor(17, 24, 39);
+      doc.setFontSize(16);
+      doc.setFont("helvetica", "bold");
+      doc.text("ATTESTATION SUR L'HONNEUR // DÉPLACEMENTS VÉLO", 14, 18);
+
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Période : ${scope === 'CURRENT_MONTH' ? `${monthLabel} ${year}` : `Année ${year}`} | Salarié : ${userName} (${company})`, 14, 28);
+
+      doc.setLineWidth(0.8);
+      doc.setFillColor(243, 240, 230);
+      doc.rect(14, 45, 85, 22, 'FD');
+      doc.rect(110, 45, 85, 22, 'FD');
+
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "bold");
+      doc.text(`Total Jours : ${bikeList.length} jours`, 20, 54);
+      doc.text(`Distance cumulée : ${Math.round(totalKm)} km`, 20, 61);
+
+      doc.text(`CO2 Évité estimé : ~${Math.round(totalCo2)} kg`, 116, 54);
+      doc.text(`Mode : Déplacement Vélo / Mobilité Douce`, 116, 61);
+
+      const tableRows = bikeList.map(item => [
+        item.dateFormatted,
+        item.dayName,
+        item.tripType,
+        `${item.km.toFixed(1)} km`,
+        `${item.co2.toFixed(1)} kg`,
+        item.note || '-'
+      ]);
+
+      doc.autoTable({
+        startY: 75,
+        head: [['Date', 'Jour', 'Trajet', 'Distance', 'CO2 Évité', 'Observations']],
+        body: tableRows.length > 0 ? tableRows : [['-', '-', 'Aucun trajet', '-', '-', '-']],
+        theme: 'plain',
+        headStyles: { fillColor: [17, 24, 39], textColor: 255, fontStyle: 'bold' },
+        styles: { fontSize: 8.5, lineColor: [17, 24, 39], lineWidth: 0.2 },
+        foot: [['TOTAL', `${bikeList.length} trajets`, '', `${totalKm.toFixed(1)} km`, `${totalCo2.toFixed(1)} kg`, '']],
+        footStyles: { fillColor: [255, 230, 0], textColor: [17, 24, 39], fontStyle: 'bold' }
+      });
+
+      const finalY = doc.lastAutoTable.finalY + 15;
+      doc.setFontSize(8.5);
+      doc.text("Je certifie sur l'honneur l'exactitude des informations mentionnées ci-dessus.", 14, finalY);
+
+      doc.rect(14, finalY + 8, 85, 25);
+      doc.text("Signature du salarié :", 18, finalY + 15);
+
+      doc.rect(110, finalY + 8, 85, 25);
+      doc.text("Validation Employeur / RH :", 114, finalY + 15);
+
+      doc.save(`Attestation_Velo_${year}.pdf`);
+      showToast('Document PDF généré !');
+    }
+
+    // --- BACKUP JSON ---
+    function exportJsonBackup() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `zenleave_backup_${new Date().toISOString().slice(0,10)}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      showToast('Sauvegarde JSON générée');
+    }
+
+    function triggerJsonImport() {
+      document.getElementById('jsonFileInput').click();
+    }
+
+    function handleJsonImport(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (imported.preferences && imported.days) {
+            appData = imported;
+            saveAppData();
+            syncPreferencesFields();
+            renderAllViews();
+            updateKpis();
+            showToast('Données restaurées avec succès !');
+          }
+        } catch (err) {
+          alert('Fichier JSON invalide : ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toastNotification');
+      document.getElementById('toastMessage').textContent = msg;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+        toast.classList.remove('translate-y-0', 'opacity-100');
+      }, 2400);
+    }
+
+    function escapeHtml(text) {
+      if (!text) return '';
+      return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initApp();
+    });
+  </script>
+</body>
+</html>
