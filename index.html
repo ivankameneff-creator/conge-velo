@@ -1023,6 +1023,13 @@ CREATE POLICY "zenleave_days_all" ON public.zenleave_days FOR ALL USING (true);<
                 Copier SQL
               </button>
             </div>
+            <div class="pt-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 bg-white p-2 rounded-xl border border-pop-dark">
+              <span class="text-[11px] font-bold text-slate-700">Script complet prérempli avec vos congés :</span>
+              <button type="button" onclick="downloadCurrentDataSql()" class="brutal-btn bg-pop-lime px-3 py-1.5 rounded-lg text-[11px] font-black flex items-center gap-1.5 text-pop-dark">
+                <span>💾</span>
+                <span>Télécharger seed_data.sql</span>
+              </button>
+            </div>
           </div>
         </details>
       </div>
@@ -1495,6 +1502,82 @@ CREATE POLICY "zenleave_days_all" ON public.zenleave_days FOR ALL USING (true);<
       } else {
         showToast('Sélectionnez et copiez le texte ci-dessus.');
       }
+    }
+
+    function downloadCurrentDataSql() {
+      const uName = (appData.preferences.userName || 'Salarié').replace(/'/g, "''");
+      const uComp = (appData.preferences.userCompany || '').replace(/'/g, "''");
+      
+      let sql = `-- =============================================================================\n`;
+      sql += `-- ZENLEAVE POP - EXPORT SQL PRÉREMPLI DE VOS DONNÉES\n`;
+      sql += `-- Salarié : ${uName} (${uComp})\n`;
+      sql += `-- Généré le : ${new Date().toISOString()}\n`;
+      sql += `-- =============================================================================\n\n`;
+
+      sql += `-- 1. CRÉATION DES TABLES ET POLITIQUES RLS\n`;
+      sql += `CREATE TABLE IF NOT EXISTS public.zenleave_config (\n`;
+      sql += `    id TEXT PRIMARY KEY DEFAULT 'default',\n`;
+      sql += `    preferences JSONB NOT NULL DEFAULT '{}'::jsonb,\n`;
+      sql += `    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()\n`;
+      sql += `);\n\n`;
+
+      sql += `CREATE TABLE IF NOT EXISTS public.zenleave_days (\n`;
+      sql += `    day_date DATE PRIMARY KEY,\n`;
+      sql += `    matin TEXT NOT NULL DEFAULT 'TRAVAILLE',\n`;
+      sql += `    aprem TEXT NOT NULL DEFAULT 'TRAVAILLE',\n`;
+      sql += `    velo BOOLEAN NOT NULL DEFAULT FALSE,\n`;
+      sql += `    velo_trip TEXT NOT NULL DEFAULT 'AR',\n`;
+      sql += `    note TEXT DEFAULT '',\n`;
+      sql += `    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()\n`;
+      sql += `);\n\n`;
+
+      sql += `ALTER TABLE public.zenleave_config ENABLE ROW LEVEL SECURITY;\n`;
+      sql += `ALTER TABLE public.zenleave_days ENABLE ROW LEVEL SECURITY;\n\n`;
+
+      sql += `DROP POLICY IF EXISTS "zenleave_config_all" ON public.zenleave_config;\n`;
+      sql += `CREATE POLICY "zenleave_config_all" ON public.zenleave_config FOR ALL USING (true);\n\n`;
+
+      sql += `DROP POLICY IF EXISTS "zenleave_days_all" ON public.zenleave_days;\n`;
+      sql += `CREATE POLICY "zenleave_days_all" ON public.zenleave_days FOR ALL USING (true);\n\n`;
+
+      sql += `-- 2. CONFIGURATION ET SOLDES\n`;
+      const pJson = JSON.stringify(appData.preferences).replace(/'/g, "''");
+      sql += `INSERT INTO public.zenleave_config (id, preferences, updated_at)\n`;
+      sql += `VALUES ('default', '${pJson}'::jsonb, NOW())\n`;
+      sql += `ON CONFLICT (id) DO UPDATE SET preferences = EXCLUDED.preferences, updated_at = NOW();\n\n`;
+
+      const dayKeys = Object.keys(appData.days).sort();
+      if (dayKeys.length > 0) {
+        sql += `-- 3. INSERTION DE VOS ${dayKeys.length} JOURNÉES\n`;
+        sql += `INSERT INTO public.zenleave_days (day_date, matin, aprem, velo, velo_trip, note, updated_at)\nVALUES\n`;
+        const rows = dayKeys.map(dStr => {
+          const d = appData.days[dStr];
+          const periods = getDayPeriods(d);
+          const velo = Boolean(d.velo);
+          const trip = (d.veloTrip || 'AR').replace(/'/g, "''");
+          const note = (d.note || '').replace(/'/g, "''");
+          return `    ('${dStr}', '${periods.matin}', '${periods.aprem}', ${velo}, '${trip}', '${note}', NOW())`;
+        });
+        sql += rows.join(',\n');
+        sql += `\nON CONFLICT (day_date) DO UPDATE SET\n`;
+        sql += `    matin = EXCLUDED.matin,\n`;
+        sql += `    aprem = EXCLUDED.aprem,\n`;
+        sql += `    velo = EXCLUDED.velo,\n`;
+        sql += `    velo_trip = EXCLUDED.velo_trip,\n`;
+        sql += `    note = EXCLUDED.note,\n`;
+        sql += `    updated_at = NOW();\n`;
+      }
+
+      const blob = new Blob([sql], { type: 'text/sql;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `seed_data_zenleave_${appData.preferences.year || 2026}.sql`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showToast('Fichier SQL téléchargé !');
     }
 
     function syncPreferencesFields() {
