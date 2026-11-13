@@ -12,15 +12,19 @@
 -- 3. Collez ce script et cliquez sur "Run"
 -- =============================================================================
 
+-- Suppression propre des anciennes tables mono-utilisateurs si présentes
+DROP TABLE IF EXISTS public.zenleave_days CASCADE;
+DROP TABLE IF EXISTS public.zenleave_config CASCADE;
+
 -- 1. TABLE DES PRÉFÉRENCES ET SOLDES (PAR UTILISATEUR)
-CREATE TABLE IF NOT EXISTS public.zenleave_config (
+CREATE TABLE public.zenleave_config (
     user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     preferences JSONB NOT NULL DEFAULT '{}'::jsonb,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- 2. TABLE DES JOURNÉES DE CONGÉS & TRAJETS VÉLO (PAR UTILISATEUR)
-CREATE TABLE IF NOT EXISTS public.zenleave_days (
+CREATE TABLE public.zenleave_days (
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     day_date DATE NOT NULL,
     matin TEXT NOT NULL DEFAULT 'TRAVAILLE',

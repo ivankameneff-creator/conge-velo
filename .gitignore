@@ -13,3 +13,5 @@ desktop.ini
 
 # Supabase local config (not committed to avoid leaking local credentials in public repos)
 supabase-config.js
+
+PSTranscripts/

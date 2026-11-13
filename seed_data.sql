@@ -9,6 +9,11 @@
 -- 3. Ouvrez le SQL Editor dans Supabase, collez tout ce script et cliquez sur 'Run'.
 -- =============================================================================
 
+-- Si vous aviez déjà créé les anciennes tables mono-utilisateurs (sans user_id),
+-- nous supprimons les anciennes tables pour recréer la structure multi-utilisateurs propre.
+DROP TABLE IF EXISTS public.zenleave_days CASCADE;
+DROP TABLE IF EXISTS public.zenleave_config CASCADE;
+
 -- 1. CRÉATION DES TABLES MULTI-UTILISATEURS & POLITIQUES RLS
 CREATE TABLE IF NOT EXISTS public.zenleave_config (
     user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,

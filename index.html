@@ -1048,13 +1048,16 @@
               Dans Supabase, ouvrez <b>SQL Editor > New Query</b>, collez ce script puis cliquez sur <b>Run</b> (ou utilisez le fichier <code class="bg-white px-1 border border-pop-dark rounded font-mono">schema.sql</code>) :
             </p>
             <div class="relative">
-              <pre class="bg-pop-dark text-pop-lime p-2.5 rounded-xl text-[10px] font-mono overflow-x-auto max-h-36 border-2 border-pop-dark" id="sqlSchemaPre">CREATE TABLE IF NOT EXISTS public.zenleave_config (
+              <pre class="bg-pop-dark text-pop-lime p-2.5 rounded-xl text-[10px] font-mono overflow-x-auto max-h-36 border-2 border-pop-dark" id="sqlSchemaPre">DROP TABLE IF EXISTS public.zenleave_days CASCADE;
+DROP TABLE IF EXISTS public.zenleave_config CASCADE;
+
+CREATE TABLE public.zenleave_config (
     user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
     preferences JSONB NOT NULL DEFAULT '{}'::jsonb,
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS public.zenleave_days (
+CREATE TABLE public.zenleave_days (
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     day_date DATE NOT NULL,
     matin TEXT NOT NULL DEFAULT 'TRAVAILLE',
