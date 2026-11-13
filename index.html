@@ -214,13 +214,6 @@
             <span>Mes Soldes</span>
           </button>
 
-          <!-- Database Button (PostgreSQL Cloud) -->
-          <button onclick="openDatabaseModal()" id="btnDatabaseTrigger" class="brutal-btn bg-white px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 text-pop-dark border-2 border-pop-dark" title="Base de données Cloud PostgreSQL">
-            <i data-lucide="database" class="w-4 h-4 text-emerald-600"></i>
-            <span id="dbStatusBadgeText">Cloud DB</span>
-            <span id="dbStatusDot" class="w-2.5 h-2.5 rounded-full bg-slate-400 inline-block transition-colors"></span>
-          </button>
-
           <!-- Export Button -->
           <button onclick="openExportModal()" class="brutal-btn bg-pop-lime px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 text-pop-dark">
             <i data-lucide="download" class="w-4 h-4"></i>
@@ -918,182 +911,7 @@
     </div>
   </div>
 
-  <!-- ========================================================================= -->
-  <!-- MODAL: BASE DE DONNÉES CLOUD (SUPABASE / POSTGRESQL)                       -->
-  <!-- ========================================================================= -->
-  <div id="modalDatabase" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-pop-dark/60 backdrop-blur-sm">
-    <div class="bg-pop-cream brutal-box-xl border-3 border-pop-dark rounded-2xl w-full max-w-xl p-5 sm:p-6 text-pop-dark relative max-h-[90vh] overflow-y-auto">
-      
-      <!-- Close Button -->
-      <button onclick="closeDatabaseModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-pop-dark text-white font-bold flex items-center justify-center hover:bg-pop-coral transition">
-        ✕
-      </button>
 
-      <!-- Modal Header -->
-      <div class="flex items-center gap-3 mb-4">
-        <div class="w-12 h-12 bg-emerald-400 brutal-box rounded-xl flex items-center justify-center text-2xl">
-          🐘
-        </div>
-        <div>
-          <h3 class="text-lg sm:text-xl font-black uppercase">Base de Données Cloud</h3>
-          <p class="text-xs text-slate-600 font-bold">PostgreSQL managé via Supabase (Multi-appareils & Temps réel)</p>
-        </div>
-      </div>
-
-      <!-- Connection Status Banner -->
-      <div id="dbStatusBanner" class="p-3.5 rounded-xl border-2 border-pop-dark mb-3 bg-pop-gray flex items-center justify-between">
-        <div class="flex items-center gap-2.5">
-          <span id="dbBannerDot" class="w-3.5 h-3.5 rounded-full bg-slate-400 inline-block"></span>
-          <div>
-            <div id="dbBannerTitle" class="text-xs font-black">Mode Local (Navigateur / localStorage)</div>
-            <div id="dbBannerSubtitle" class="text-[10px] text-slate-600 font-semibold">Connectez Supabase pour sauvegarder dans une vraie base PostgreSQL.</div>
-          </div>
-        </div>
-        <span id="dbBannerBadge" class="sticker-badge bg-pop-yellow text-[10px]">HORS CLOUD</span>
-      </div>
-
-      <!-- GitHub Variables Notice Banner -->
-      <div id="dbGithubConfigNotice" class="hidden p-3 rounded-xl border-2 border-pop-dark mb-4 bg-sky-100 flex items-center justify-between text-xs shadow-brutal-sm">
-        <div class="flex items-center gap-2">
-          <span class="text-base">🐙</span>
-          <div>
-            <div class="font-black text-slate-900">Variables GitHub détectées</div>
-            <div class="text-[10px] text-slate-700">Identifiants configurés via GitHub Actions (SUPABASE_URL & ANON_KEY).</div>
-          </div>
-        </div>
-        <button type="button" onclick="resetToGitHubConfig()" class="text-[10px] font-black underline bg-white px-2 py-1 rounded border border-pop-dark hover:bg-sky-50 cursor-pointer">
-          Recharger GitHub
-        </button>
-      </div>
-
-      <!-- Database Config Form -->
-      <form id="formDatabase" onsubmit="saveDatabaseConfig(event)" class="space-y-3 text-xs">
-        <div>
-          <label class="block font-black text-slate-800 mb-1 flex items-center justify-between">
-            <span>URL du Projet Supabase</span>
-            <span class="text-[10px] font-normal text-slate-500 font-mono">https://xxxxxxxxxxxx.supabase.co</span>
-          </label>
-          <input type="url" id="dbSupabaseUrl" placeholder="https://votre-projet.supabase.co" class="w-full bg-white border-2 border-pop-dark p-2 text-xs font-mono font-bold shadow-brutal-sm rounded-lg" autocomplete="off">
-        </div>
-
-        <div>
-          <label class="block font-black text-slate-800 mb-1 flex items-center justify-between">
-            <span>Clé API Publique (anon key)</span>
-            <span class="text-[10px] font-normal text-slate-500 font-mono">public anon</span>
-          </label>
-          <div class="relative">
-            <input type="password" id="dbSupabaseAnonKey" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..." class="w-full bg-white border-2 border-pop-dark p-2 pr-16 text-xs font-mono font-bold shadow-brutal-sm rounded-lg" autocomplete="off">
-            <button type="button" onclick="togglePasswordVisibility('dbSupabaseAnonKey')" class="absolute right-2 top-2 text-[10px] font-bold text-slate-600 hover:text-pop-dark underline">
-              Voir
-            </button>
-          </div>
-          <div class="text-[10px] text-slate-500 font-semibold mt-1">
-            À récupérer dans votre tableau de bord Supabase : <b>Project Settings > API > Project API keys > anon / public</b>.
-          </div>
-        </div>
-
-        <!-- Connection Buttons -->
-        <div class="pt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
-          <button type="submit" class="brutal-btn bg-emerald-400 p-2.5 rounded-xl font-black text-xs flex items-center justify-center gap-1.5">
-            <i data-lucide="plug-zap" class="w-4 h-4"></i>
-            <span>Tester & Enregistrer</span>
-          </button>
-          <button type="button" onclick="disconnectDatabase()" class="brutal-btn bg-pop-coral text-white p-2.5 rounded-xl font-black text-xs flex items-center justify-center gap-1.5">
-            <i data-lucide="unlink" class="w-4 h-4"></i>
-            <span>Déconnecter (Local)</span>
-          </button>
-        </div>
-
-        <!-- Action Buttons when connected -->
-        <div id="dbConnectedActions" class="hidden pt-3 border-t-2 border-pop-dark/20 grid grid-cols-2 gap-2">
-          <button type="button" onclick="pushAllToDatabase()" class="brutal-btn bg-pop-cyan p-2.5 rounded-xl font-black text-[11px] flex items-center justify-center gap-1.5">
-            <i data-lucide="upload-cloud" class="w-4 h-4"></i>
-            <span>Envoyer vers le Cloud</span>
-          </button>
-          <button type="button" onclick="pullAllFromDatabase(true)" class="brutal-btn bg-pop-yellow p-2.5 rounded-xl font-black text-[11px] flex items-center justify-center gap-1.5">
-            <i data-lucide="download-cloud" class="w-4 h-4"></i>
-            <span>Charger depuis le Cloud</span>
-          </button>
-        </div>
-      </form>
-
-      <!-- Access Security & Authentication Status (Multi-User RLS) -->
-      <div class="mt-4 pt-3 border-t-2 border-pop-dark">
-        <div class="p-3.5 rounded-xl border-2 border-pop-dark bg-amber-50 space-y-2">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <span class="text-xl">🔐</span>
-              <div>
-                <div class="font-black text-xs text-slate-900">Authentification & Isolation Multi-Utilisateurs</div>
-                <div class="text-[10px] text-slate-600 font-semibold">Sécurisé par Supabase Auth & PostgreSQL Row Level Security (RLS).</div>
-              </div>
-            </div>
-            <span class="sticker-badge bg-emerald-400 text-pop-dark text-[10px]">RLS ACTIF 🔒</span>
-          </div>
-          <p class="text-[11px] text-slate-700 font-medium bg-white/80 p-2.5 rounded-lg border border-pop-dark/20">
-            🔒 <b>Sécurité cryptographique PostgreSQL</b> : Chaque utilisateur est isolé par sa clé unique (<code class="font-bold text-pop-dark font-mono">auth.uid() = user_id</code>). Même avec la clé API publique, un utilisateur ne peut jamais lire ou altérer les congés d'un autre utilisateur. Les comptes sont invités par l'administrateur avec confirmation par email.
-          </p>
-        </div>
-      </div>
-
-      <!-- SQL Schema Collapsible Helper -->
-      <div class="mt-4 pt-3 border-t-2 border-pop-dark">
-        <details class="text-xs group">
-          <summary class="font-black cursor-pointer flex items-center justify-between py-1 select-none hover:text-pop-pink">
-            <span>📋 Script SQL d'initialisation Multi-Utilisateurs (à exécuter 1 fois)</span>
-            <span class="text-[10px] text-slate-500 font-mono group-open:rotate-180 transition">▼</span>
-          </summary>
-          <div class="mt-2 space-y-2">
-            <p class="text-[11px] text-slate-600 font-semibold">
-              Dans Supabase, ouvrez <b>SQL Editor > New Query</b>, collez ce script puis cliquez sur <b>Run</b> (ou utilisez le fichier <code class="bg-white px-1 border border-pop-dark rounded font-mono">schema.sql</code>) :
-            </p>
-            <div class="relative">
-              <pre class="bg-pop-dark text-pop-lime p-2.5 rounded-xl text-[10px] font-mono overflow-x-auto max-h-36 border-2 border-pop-dark" id="sqlSchemaPre">DROP TABLE IF EXISTS public.zenleave_days CASCADE;
-DROP TABLE IF EXISTS public.zenleave_config CASCADE;
-
-CREATE TABLE public.zenleave_config (
-    user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-    preferences JSONB NOT NULL DEFAULT '{}'::jsonb,
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE public.zenleave_days (
-    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    day_date DATE NOT NULL,
-    matin TEXT NOT NULL DEFAULT 'TRAVAILLE',
-    aprem TEXT NOT NULL DEFAULT 'TRAVAILLE',
-    velo BOOLEAN NOT NULL DEFAULT FALSE,
-    velo_trip TEXT NOT NULL DEFAULT 'AR',
-    note TEXT DEFAULT '',
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    PRIMARY KEY (user_id, day_date)
-);
-
-ALTER TABLE public.zenleave_config ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.zenleave_days ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "zenleave_config_user_isolation" ON public.zenleave_config
-    FOR ALL TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "zenleave_days_user_isolation" ON public.zenleave_days
-    FOR ALL TO authenticated USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);</pre>
-              <button onclick="copySqlSchema()" class="absolute top-2 right-2 bg-pop-yellow text-pop-dark px-2 py-0.5 rounded text-[10px] font-black border border-pop-dark hover:bg-white">
-                Copier SQL
-              </button>
-            </div>
-            <div class="pt-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 bg-white p-2 rounded-xl border border-pop-dark">
-              <span class="text-[11px] font-bold text-slate-700">Script complet prérempli avec vos congés :</span>
-              <button type="button" onclick="downloadCurrentDataSql()" class="brutal-btn bg-pop-lime px-3 py-1.5 rounded-lg text-[11px] font-black flex items-center gap-1.5 text-pop-dark">
-                <span>💾</span>
-                <span>Télécharger seed_data.sql</span>
-              </button>
-            </div>
-          </div>
-        </details>
-      </div>
-
-    </div>
-  </div>
 
   <!-- ========================================================================= -->
   <!-- MODAL: AUTHENTIFICATION MULTI-UTILISATEURS (SUPABASE AUTH)               -->
@@ -1503,35 +1321,8 @@ CREATE POLICY "zenleave_days_user_isolation" ON public.zenleave_days
       return { url: '', anonKey: '', isFromGitHub: false, hasGitHubAvailable: false, disabled: false };
     }
 
-    function openDatabaseModal() {
-      const cfg = getSavedDatabaseConfig();
-      document.getElementById('dbSupabaseUrl').value = cfg.url || '';
-      document.getElementById('dbSupabaseAnonKey').value = cfg.anonKey || '';
-
-      const githubNotice = document.getElementById('dbGithubConfigNotice');
-      if (githubNotice) {
-        if (cfg.hasGitHubAvailable) {
-          githubNotice.classList.remove('hidden');
-        } else {
-          githubNotice.classList.add('hidden');
-        }
-      }
-
-      document.getElementById('modalDatabase').classList.remove('hidden');
-    }
-
-    function resetToGitHubConfig() {
-      localStorage.removeItem(DB_STORAGE_CONFIG_KEY);
-      const cfg = getSavedDatabaseConfig();
-      document.getElementById('dbSupabaseUrl').value = cfg.url || '';
-      document.getElementById('dbSupabaseAnonKey').value = cfg.anonKey || '';
-      showToast('Configuration réinitialisée avec les variables GitHub');
-      initDatabaseConnection(true);
-    }
-
-    function closeDatabaseModal() {
-      document.getElementById('modalDatabase').classList.add('hidden');
-    }
+    function openDatabaseModal() {}
+    function closeDatabaseModal() {}
 
     function togglePasswordVisibility(fieldId) {
       const inp = document.getElementById(fieldId);
@@ -1541,91 +1332,28 @@ CREATE POLICY "zenleave_days_user_isolation" ON public.zenleave_days
     }
 
     function setDatabaseUiStatus(status, detail = '') {
-      const badgeText = document.getElementById('dbStatusBadgeText');
-      const dot = document.getElementById('dbStatusDot');
-      const banner = document.getElementById('dbStatusBanner');
-      const bannerDot = document.getElementById('dbBannerDot');
-      const bannerTitle = document.getElementById('dbBannerTitle');
-      const bannerSubtitle = document.getElementById('dbBannerSubtitle');
-      const bannerBadge = document.getElementById('dbBannerBadge');
-      const actionsDiv = document.getElementById('dbConnectedActions');
       const footerBadge = document.getElementById('footerDbBadge');
       const footerText = document.getElementById('footerDbText');
 
-      if (!badgeText || !dot) return;
+      if (!footerBadge || !footerText) return;
 
       if (status === 'CONNECTED') {
-        badgeText.textContent = 'PostgreSQL';
-        dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block transition-colors';
-        
-        if (banner) {
-          banner.className = 'p-3.5 rounded-xl border-2 border-pop-dark mb-4 bg-emerald-100 flex items-center justify-between';
-          bannerDot.className = 'w-3.5 h-3.5 rounded-full bg-emerald-500 inline-block';
-          bannerTitle.textContent = 'Connecté à Supabase (PostgreSQL Cloud)';
-          bannerSubtitle.textContent = 'Vos modifications sont synchronisées en ligne automatiquement.';
-          bannerBadge.textContent = 'EN LIGNE 🟢';
-          bannerBadge.className = 'sticker-badge bg-emerald-300 text-pop-dark text-[10px]';
-        }
-        if (footerBadge && footerText) {
-          footerBadge.textContent = 'CLOUD BDD';
-          footerBadge.className = 'sticker-badge bg-pop-green';
-          footerText.textContent = 'Données synchronisées avec Supabase.';
-        }
-        if (actionsDiv) actionsDiv.classList.remove('hidden');
+        footerBadge.textContent = 'CLOUD BDD';
+        footerBadge.className = 'sticker-badge bg-pop-green';
+        footerText.textContent = 'Données synchronisées avec Supabase.';
       } else if (status === 'CONNECTING') {
-        badgeText.textContent = 'Connexion...';
-        dot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse inline-block transition-colors';
-        
-        if (banner) {
-          banner.className = 'p-3.5 rounded-xl border-2 border-pop-dark mb-4 bg-amber-50 flex items-center justify-between';
-          bannerDot.className = 'w-3.5 h-3.5 rounded-full bg-amber-400 animate-pulse inline-block';
-          bannerTitle.textContent = 'Connexion à la base de données...';
-          bannerSubtitle.textContent = 'Vérification des tables zenleave_config et zenleave_days...';
-          bannerBadge.textContent = 'TESTING ⏳';
-          bannerBadge.className = 'sticker-badge bg-amber-200 text-pop-dark text-[10px]';
-        }
-        if (footerBadge && footerText) {
-          footerBadge.textContent = 'CONNEXION...';
-          footerBadge.className = 'sticker-badge bg-amber-200';
-          footerText.textContent = 'Connexion à la base de données en cours...';
-        }
+        footerBadge.textContent = 'CONNEXION...';
+        footerBadge.className = 'sticker-badge bg-amber-200';
+        footerText.textContent = 'Connexion à la base de données en cours...';
       } else if (status === 'ERROR') {
-        badgeText.textContent = 'Erreur Cloud';
-        dot.className = 'w-2.5 h-2.5 rounded-full bg-rose-500 inline-block transition-colors';
-        
-        if (banner) {
-          banner.className = 'p-3.5 rounded-xl border-2 border-pop-dark mb-4 bg-rose-100 flex items-center justify-between';
-          bannerDot.className = 'w-3.5 h-3.5 rounded-full bg-rose-500 inline-block';
-          bannerTitle.textContent = 'Erreur de connexion Supabase';
-          bannerSubtitle.textContent = detail || 'Vérifiez l’URL, la clé anon et l’exécution de schema.sql.';
-          bannerBadge.textContent = 'ERREUR 🔴';
-          bannerBadge.className = 'sticker-badge bg-rose-300 text-pop-dark text-[10px]';
-        }
-        if (footerBadge && footerText) {
-          footerBadge.textContent = 'ERREUR BDD';
-          footerBadge.className = 'sticker-badge bg-rose-300';
-          footerText.textContent = 'Erreur de synchronisation Cloud.';
-        }
-        if (actionsDiv) actionsDiv.classList.add('hidden');
+        footerBadge.textContent = 'ERREUR BDD';
+        footerBadge.className = 'sticker-badge bg-rose-300';
+        footerText.textContent = detail ? `Erreur BDD: ${detail}` : 'Erreur de synchronisation Cloud.';
       } else {
         // OFFLINE / LOCAL
-        badgeText.textContent = 'Cloud DB';
-        dot.className = 'w-2.5 h-2.5 rounded-full bg-slate-400 inline-block transition-colors';
-        
-        if (banner) {
-          banner.className = 'p-3.5 rounded-xl border-2 border-pop-dark mb-4 bg-pop-gray flex items-center justify-between';
-          bannerDot.className = 'w-3.5 h-3.5 rounded-full bg-slate-400 inline-block';
-          bannerTitle.textContent = 'Mode Local (Navigateur / localStorage)';
-          bannerSubtitle.textContent = 'Connectez Supabase pour sauvegarder dans une vraie base PostgreSQL.';
-          bannerBadge.textContent = 'HORS CLOUD';
-          bannerBadge.className = 'sticker-badge bg-pop-yellow text-pop-dark text-[10px]';
-        }
-        if (footerBadge && footerText) {
-          footerBadge.textContent = 'HORS LIGNE';
-          footerBadge.className = 'sticker-badge bg-pop-yellow';
-          footerText.textContent = 'En attente de connexion à la base de données.';
-        }
-        if (actionsDiv) actionsDiv.classList.add('hidden');
+        footerBadge.textContent = 'HORS LIGNE';
+        footerBadge.className = 'sticker-badge bg-pop-yellow';
+        footerText.textContent = 'En attente de connexion à la base de données.';
       }
     }
 
@@ -1684,49 +1412,6 @@ CREATE POLICY "zenleave_days_user_isolation" ON public.zenleave_days
         if (showToasts) showToast('🔴 Erreur connexion Supabase');
         return false;
       }
-    }
-
-    async function saveDatabaseConfig(event) {
-      event.preventDefault();
-      const url = document.getElementById('dbSupabaseUrl').value.trim();
-      const anonKey = document.getElementById('dbSupabaseAnonKey').value.trim();
-
-      if (!url || !anonKey) {
-        alert('Veuillez renseigner l’URL et la clé anon de votre projet Supabase.');
-        return;
-      }
-
-      localStorage.setItem(DB_STORAGE_CONFIG_KEY, JSON.stringify({ url, anonKey }));
-      showToast('Test de connexion en cours...');
-      const ok = await initDatabaseConnection(true);
-      if (ok) {
-        try {
-          if (currentUser) {
-            const { count } = await supabaseClient.from('zenleave_days').select('*', { count: 'exact', head: true }).eq('user_id', currentUser.id);
-            if (!count || count === 0) {
-              await pushAllToDatabase();
-            } else {
-              await pullAllFromDatabase(true);
-            }
-          }
-        } catch (e) {
-          console.warn('Count check error:', e);
-        }
-        closeDatabaseModal();
-      }
-    }
-
-    function disconnectDatabase() {
-      localStorage.setItem(DB_STORAGE_CONFIG_KEY, JSON.stringify({ disabled: true, url: '', anonKey: '' }));
-      isDbConnected = false;
-      supabaseClient = null;
-      currentUser = null;
-      document.getElementById('dbSupabaseUrl').value = '';
-      document.getElementById('dbSupabaseAnonKey').value = '';
-      setDatabaseUiStatus('OFFLINE');
-      updateAuthUi();
-      showToast('Déconnecté : données conservées en local');
-      closeDatabaseModal();
     }
 
     async function pullAllFromDatabase(showNotification = true) {
@@ -1851,75 +1536,6 @@ CREATE POLICY "zenleave_days_user_isolation" ON public.zenleave_days
       } catch (err) {
         console.warn('Sync preferences failed:', err);
       }
-    }
-
-    function copySqlSchema() {
-      const sql = document.getElementById('sqlSchemaPre').textContent;
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(sql).then(() => {
-          showToast('Script SQL copié dans le presse-papier !');
-        });
-      } else {
-        showToast('Sélectionnez et copiez le texte ci-dessus.');
-      }
-    }
-
-    function downloadCurrentDataSql() {
-      const uName = (appData.preferences.userName || 'Salarié').replace(/'/g, "''");
-      const uComp = (appData.preferences.userCompany || '').replace(/'/g, "''");
-      const uMail = (currentUser && currentUser.email ? currentUser.email : 'ivan.kameneff@gmail.com').replace(/'/g, "''");
-      
-      let sql = `-- =============================================================================\n`;
-      sql += `-- ZENLEAVE POP - EXPORT SQL MULTI-UTILISATEURS\n`;
-      sql += `-- Salarié : ${uName} (${uComp}) - Email: ${uMail}\n`;
-      sql += `-- Généré le : ${new Date().toISOString()}\n`;
-      sql += `-- =============================================================================\n\n`;
-
-      sql += `DO $$\nDECLARE\n    target_user_id UUID;\n    target_email TEXT := '${uMail}';\nBEGIN\n`;
-      sql += `    SELECT id INTO target_user_id FROM auth.users WHERE email = target_email;\n`;
-      sql += `    IF target_user_id IS NULL THEN\n`;
-      sql += `        RAISE EXCEPTION 'Utilisateur introuvable avec email % dans auth.users', target_email;\n`;
-      sql += `    END IF;\n\n`;
-
-      const pJson = JSON.stringify(appData.preferences).replace(/'/g, "''");
-      sql += `    -- Configuration et soldes\n`;
-      sql += `    INSERT INTO public.zenleave_config (user_id, preferences, updated_at)\n`;
-      sql += `    VALUES (target_user_id, '${pJson}'::jsonb, NOW())\n`;
-      sql += `    ON CONFLICT (user_id) DO UPDATE SET preferences = EXCLUDED.preferences, updated_at = NOW();\n\n`;
-
-      const dayKeys = Object.keys(appData.days).sort();
-      if (dayKeys.length > 0) {
-        sql += `    -- Insertion des ${dayKeys.length} journées\n`;
-        sql += `    INSERT INTO public.zenleave_days (user_id, day_date, matin, aprem, velo, velo_trip, note, updated_at)\n    VALUES\n`;
-        const rows = dayKeys.map(dStr => {
-          const d = appData.days[dStr];
-          const periods = getDayPeriods(d);
-          const velo = Boolean(d.velo);
-          const trip = (d.veloTrip || 'AR').replace(/'/g, "''");
-          const note = (d.note || '').replace(/'/g, "''");
-          return `        (target_user_id, '${dStr}', '${periods.matin}', '${periods.aprem}', ${velo}, '${trip}', '${note}', NOW())`;
-        });
-        sql += rows.join(',\n');
-        sql += `\n    ON CONFLICT (user_id, day_date) DO UPDATE SET\n`;
-        sql += `        matin = EXCLUDED.matin,\n`;
-        sql += `        aprem = EXCLUDED.aprem,\n`;
-        sql += `        velo = EXCLUDED.velo,\n`;
-        sql += `        velo_trip = EXCLUDED.velo_trip,\n`;
-        sql += `        note = EXCLUDED.note,\n`;
-        sql += `        updated_at = NOW();\n`;
-      }
-      sql += `END $$;\n`;
-
-      const blob = new Blob([sql], { type: 'text/sql;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `seed_data_zenleave_${appData.preferences.year || 2026}.sql`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-      showToast('Fichier SQL multi-utilisateurs téléchargé !');
     }
 
     function syncPreferencesFields() {
