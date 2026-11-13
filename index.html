@@ -582,8 +582,8 @@
     <!-- ========================================================================= -->
     <footer class="bg-white brutal-box rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-bold">
       <div class="flex items-center gap-2">
-        <span class="sticker-badge bg-pop-yellow">STOCKAGE LOCAL</span>
-        <span class="text-slate-600">Données enregistrées dans votre navigateur.</span>
+        <span id="footerDbBadge" class="sticker-badge bg-pop-green">CLOUD BDD</span>
+        <span id="footerDbText" class="text-slate-600">Données synchronisées avec Supabase.</span>
       </div>
       <div class="flex items-center gap-3">
         <button onclick="exportJsonBackup()" class="hover:underline flex items-center gap-1 text-pop-dark">
@@ -1549,6 +1549,8 @@ CREATE POLICY "zenleave_days_user_isolation" ON public.zenleave_days
       const bannerSubtitle = document.getElementById('dbBannerSubtitle');
       const bannerBadge = document.getElementById('dbBannerBadge');
       const actionsDiv = document.getElementById('dbConnectedActions');
+      const footerBadge = document.getElementById('footerDbBadge');
+      const footerText = document.getElementById('footerDbText');
 
       if (!badgeText || !dot) return;
 
@@ -1564,6 +1566,11 @@ CREATE POLICY "zenleave_days_user_isolation" ON public.zenleave_days
           bannerBadge.textContent = 'EN LIGNE 🟢';
           bannerBadge.className = 'sticker-badge bg-emerald-300 text-pop-dark text-[10px]';
         }
+        if (footerBadge && footerText) {
+          footerBadge.textContent = 'CLOUD BDD';
+          footerBadge.className = 'sticker-badge bg-pop-green';
+          footerText.textContent = 'Données synchronisées avec Supabase.';
+        }
         if (actionsDiv) actionsDiv.classList.remove('hidden');
       } else if (status === 'CONNECTING') {
         badgeText.textContent = 'Connexion...';
@@ -1577,6 +1584,11 @@ CREATE POLICY "zenleave_days_user_isolation" ON public.zenleave_days
           bannerBadge.textContent = 'TESTING ⏳';
           bannerBadge.className = 'sticker-badge bg-amber-200 text-pop-dark text-[10px]';
         }
+        if (footerBadge && footerText) {
+          footerBadge.textContent = 'CONNEXION...';
+          footerBadge.className = 'sticker-badge bg-amber-200';
+          footerText.textContent = 'Connexion à la base de données en cours...';
+        }
       } else if (status === 'ERROR') {
         badgeText.textContent = 'Erreur Cloud';
         dot.className = 'w-2.5 h-2.5 rounded-full bg-rose-500 inline-block transition-colors';
@@ -1588,6 +1600,11 @@ CREATE POLICY "zenleave_days_user_isolation" ON public.zenleave_days
           bannerSubtitle.textContent = detail || 'Vérifiez l’URL, la clé anon et l’exécution de schema.sql.';
           bannerBadge.textContent = 'ERREUR 🔴';
           bannerBadge.className = 'sticker-badge bg-rose-300 text-pop-dark text-[10px]';
+        }
+        if (footerBadge && footerText) {
+          footerBadge.textContent = 'ERREUR BDD';
+          footerBadge.className = 'sticker-badge bg-rose-300';
+          footerText.textContent = 'Erreur de synchronisation Cloud.';
         }
         if (actionsDiv) actionsDiv.classList.add('hidden');
       } else {
@@ -1602,6 +1619,11 @@ CREATE POLICY "zenleave_days_user_isolation" ON public.zenleave_days
           bannerSubtitle.textContent = 'Connectez Supabase pour sauvegarder dans une vraie base PostgreSQL.';
           bannerBadge.textContent = 'HORS CLOUD';
           bannerBadge.className = 'sticker-badge bg-pop-yellow text-pop-dark text-[10px]';
+        }
+        if (footerBadge && footerText) {
+          footerBadge.textContent = 'HORS LIGNE';
+          footerBadge.className = 'sticker-badge bg-pop-yellow';
+          footerText.textContent = 'En attente de connexion à la base de données.';
         }
         if (actionsDiv) actionsDiv.classList.add('hidden');
       }
