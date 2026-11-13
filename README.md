@@ -70,7 +70,7 @@ Même avec un dépôt **Public** et un site GitHub Pages accessible publiquement
 - **Données masquées** : aucun calendrier, solde, nom ou trajet vélo n'est affiché sans le mot de passe.
 - **Mémorisation de l'appareil** : cochez *« Mémoriser sur cet appareil »* pour ne pas avoir à retaper le mot de passe à chaque visite sur votre ordinateur ou smartphone personnel.
 - **Bouton Verrouiller** : un bouton `Verrouiller` dans la barre du haut permet de reverrouiller l'accès en 1 clic.
-- **Gestion dans l'application** : vous pouvez aussi définir, modifier ou retirer le mot de passe à tout moment depuis la modale **Base de données ☁️ > Mot de Passe d'Accès BDD**.
+- **Gestion sécurisée** : par mesure de sécurité, le mot de passe ne peut **pas être modifié ni retiré depuis l'IHM web**. Il est contrôlé exclusivement par vous via le secret GitHub `APP_PASSWORD`.
 
 ### 2. Activer GitHub Pages :
 1. Dans **Settings** > **Pages** de votre dépôt GitHub.

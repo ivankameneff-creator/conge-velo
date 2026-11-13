@@ -1010,39 +1010,22 @@
         </div>
       </form>
 
-      <!-- Access Password & Security Box -->
+      <!-- Access Password & Security Status (Read-Only) -->
       <div class="mt-4 pt-3 border-t-2 border-pop-dark">
-        <div class="p-3.5 rounded-xl border-2 border-pop-dark bg-amber-50 space-y-3">
+        <div class="p-3.5 rounded-xl border-2 border-pop-dark bg-amber-50 space-y-2">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
               <span class="text-xl">🔐</span>
               <div>
-                <div class="font-black text-xs text-slate-900">Mot de Passe d'Accès BDD</div>
-                <div class="text-[10px] text-slate-600 font-semibold">Protège vos congés des regards extérieurs sur votre site public.</div>
+                <div class="font-black text-xs text-slate-900">Protection par Mot de Passe</div>
+                <div class="text-[10px] text-slate-600 font-semibold">Géré de façon sécurisée via GitHub Secrets (<code class="bg-white px-1 border border-pop-dark rounded font-mono">APP_PASSWORD</code>).</div>
               </div>
             </div>
             <span id="pwdStatusBadge" class="sticker-badge bg-pop-gray text-slate-700 text-[10px]">NON DÉFINI</span>
           </div>
-
-          <div class="space-y-2 pt-1 border-t border-slate-300">
-            <div>
-              <label class="block font-black text-[11px] text-slate-800 mb-1">Définir ou modifier le mot de passe :</label>
-              <div class="relative">
-                <input type="password" id="cfgNewPassword" placeholder="Entrez un mot de passe..." class="w-full bg-white border-2 border-pop-dark p-2 pr-12 text-xs font-mono font-bold shadow-brutal-sm rounded-lg" autocomplete="new-password">
-                <button type="button" onclick="togglePasswordVisibility('cfgNewPassword')" class="absolute right-2 top-2 text-[10px] font-bold text-slate-600 hover:text-pop-dark underline">Voir</button>
-              </div>
-            </div>
-            <div class="flex flex-wrap gap-2 pt-1">
-              <button type="button" onclick="saveAccessPassword()" class="brutal-btn bg-pop-yellow px-3 py-1.5 rounded-lg text-xs font-black flex items-center gap-1.5 text-pop-dark">
-                <i data-lucide="key" class="w-3.5 h-3.5"></i>
-                <span>Enregistrer le mot de passe</span>
-              </button>
-              <button type="button" id="btnRemovePassword" onclick="removeAccessPassword()" class="hidden brutal-btn bg-rose-200 px-3 py-1.5 rounded-lg text-xs font-bold text-rose-900 flex items-center gap-1.5 hover:bg-rose-300">
-                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                <span>Retirer</span>
-              </button>
-            </div>
-          </div>
+          <p class="text-[11px] text-slate-700 font-medium bg-white/80 p-2.5 rounded-lg border border-pop-dark/20">
+            🔒 <b>Sécurité garantie</b> : Pour empêcher toute modification non autorisée, le mot de passe ne peut <b>pas être modifié depuis l'IHM web</b>. Pour le changer ou le désactiver, modifiez directement le secret <code class="font-bold text-pop-dark font-mono">APP_PASSWORD</code> dans les paramètres de votre dépôt GitHub.
+          </p>
         </div>
       </div>
 
@@ -1303,7 +1286,6 @@ CREATE POLICY "zenleave_days_all" ON public.zenleave_days FOR ALL USING (true);<
 
     // --- SÉCURITÉ ET MOT DE PASSE D'ACCÈS ---
     const AUTH_STORAGE_KEY = 'zenleave_unlocked_token_v1';
-    const LOCAL_PWD_HASH_KEY = 'zenleave_pwd_hash_v1';
 
     async function computeSha256(text) {
       if (!text) return '';
@@ -1314,17 +1296,11 @@ CREATE POLICY "zenleave_days_all" ON public.zenleave_days FOR ALL USING (true);<
     }
 
     function getRequiredPasswordHash() {
-      // 1. Configuré via GitHub Actions (Variable/Secret APP_PASSWORD)
+      // Le mot de passe provient EXCLUSIVEMENT de GitHub Actions (Secret APP_PASSWORD).
+      // Il ne peut JAMAIS être modifié, contourné ou effacé depuis l'IHM web.
       if (window.ZENLEAVE_SUPABASE_CONFIG && window.ZENLEAVE_SUPABASE_CONFIG.authHash) {
         return window.ZENLEAVE_SUPABASE_CONFIG.authHash;
       }
-      // 2. Configuré dans les préférences (synchronisées avec Supabase)
-      if (appData.preferences && appData.preferences.passwordHash) {
-        return appData.preferences.passwordHash;
-      }
-      // 3. Stocké dans le localStorage
-      const localHash = localStorage.getItem(LOCAL_PWD_HASH_KEY);
-      if (localHash) return localHash;
       return null;
     }
 
@@ -1416,51 +1392,22 @@ CREATE POLICY "zenleave_days_all" ON public.zenleave_days FOR ALL USING (true);<
       showToast('🔒 Application verrouillée');
     }
 
-    async function saveAccessPassword() {
-      const newPwd = document.getElementById('cfgNewPassword').value.trim();
-      if (!newPwd) {
-        alert('Veuillez entrer un mot de passe.');
-        return;
-      }
-      const hash = await computeSha256(newPwd);
-      appData.preferences.passwordHash = hash;
-      localStorage.setItem(LOCAL_PWD_HASH_KEY, hash);
-      localStorage.setItem(AUTH_STORAGE_KEY, hash);
-      saveAppData();
-      document.getElementById('cfgNewPassword').value = '';
-      updateSecurityUi();
-      showToast('🔒 Mot de passe d’accès BDD enregistré !');
-    }
-
-    function removeAccessPassword() {
-      if (!confirm('Supprimer le mot de passe d’accès et rendre l’application libre d’accès ?')) return;
-      delete appData.preferences.passwordHash;
-      localStorage.removeItem(LOCAL_PWD_HASH_KEY);
-      localStorage.removeItem(AUTH_STORAGE_KEY);
-      saveAppData();
-      updateSecurityUi();
-      showToast('🔓 Mot de passe supprimé (accès libre)');
-    }
-
     function updateSecurityUi() {
       const hash = getRequiredPasswordHash();
       const badge = document.getElementById('pwdStatusBadge');
-      const btnRemove = document.getElementById('btnRemovePassword');
       const btnLock = document.getElementById('btnLockApp');
 
       if (hash) {
         if (badge) {
-          badge.textContent = 'ACTIF 🔒';
+          badge.textContent = 'ACTIF 🔒 (GITHUB SECRET)';
           badge.className = 'sticker-badge bg-emerald-400 text-pop-dark text-[10px]';
         }
-        if (btnRemove) btnRemove.classList.remove('hidden');
         if (btnLock) btnLock.classList.remove('hidden');
       } else {
         if (badge) {
-          badge.textContent = 'NON DÉFINI';
+          badge.textContent = 'NON CONFIGURÉ';
           badge.className = 'sticker-badge bg-pop-gray text-slate-700 text-[10px]';
         }
-        if (btnRemove) btnRemove.classList.add('hidden');
         if (btnLock) btnLock.classList.add('hidden');
       }
     }
@@ -1708,9 +1655,6 @@ CREATE POLICY "zenleave_days_all" ON public.zenleave_days FOR ALL USING (true);<
 
         if (!configErr && configRow && configRow.preferences) {
           appData.preferences = { ...appData.preferences, ...configRow.preferences };
-          if (configRow.preferences.passwordHash) {
-            localStorage.setItem(LOCAL_PWD_HASH_KEY, configRow.preferences.passwordHash);
-          }
         }
 
         // 2. Days
