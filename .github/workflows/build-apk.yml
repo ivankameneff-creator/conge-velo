@@ -70,18 +70,22 @@ jobs:
           echo "sdk.dir=$ANDROID_HOME" > android/local.properties
           cat android/local.properties
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" "build-tools;35.0.0"
 
       - name: Compiler l'APK Android (Debug)
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug --stacktrace --no-daemon 2>&1 | tee ../gradle-build.log
-          status=${PIPESTATUS[0]}
-          if [ $status -ne 0 ]; then
-            echo "::error::Gradle build failed with status $status"
-            tail -n 25 ../gradle-build.log | while IFS= read -r line; do
-              echo "::error title=Gradle::$line"
-            done
+          set -o pipefail
+          if ./gradlew assembleDebug --stacktrace --no-daemon 2>&1 | tee ../gradle-build.log; then
+            echo "Gradle build réussi !"
+          else
+            status=$?
+            echo "::error title=Gradle Failed::La compilation Gradle a échoué avec le code $status"
+            echo "### ❌ Échec de la compilation Gradle" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            grep -E "(FAILURE:|What went wrong|Caused by:|compileSdk|AAPT|error:)" -A 10 -B 2 ../gradle-build.log | head -n 35 >> $GITHUB_STEP_SUMMARY || tail -n 35 ../gradle-build.log >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
             exit $status
           fi
 
