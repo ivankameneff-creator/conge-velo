@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Congés &amp; Vélo</string>
+    <string name="title_activity_main">Congés &amp; Vélo</string>
+    <string name="package_name">fr.zenleave.congevelo</string>
+    <string name="custom_url_scheme">fr.zenleave.congevelo</string>
+</resources>

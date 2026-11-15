@@ -1,0 +1,16 @@
+{
+  "name": "conge-velo",
+  "version": "1.0.0",
+  "description": "Application Congés & Vélo (ZenLeave Pop)",
+  "scripts": {
+    "build": "node -e \"const fs = require('fs'); if (!fs.existsSync('www')) fs.mkdirSync('www'); fs.copyFileSync('index.html', 'www/index.html'); if (fs.existsSync('supabase-config.js')) { fs.copyFileSync('supabase-config.js', 'www/supabase-config.js'); } else if (fs.existsSync('supabase-config.sample.js')) { fs.copyFileSync('supabase-config.sample.js', 'www/supabase-config.js'); } console.log('Web assets prepared in www/');\"",
+    "cap:sync": "npm run build && npx cap sync android",
+    "cap:open": "npx cap open android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.6.2",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/cli": "^8.6.2",
+    "@capacitor/core": "^8.6.2"
+  }
+}

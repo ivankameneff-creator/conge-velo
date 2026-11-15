@@ -2,8 +2,8 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ZenLeave // POP & HEATMAP EDITION 🌴🚲</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Congés &amp; Vélo // POP &amp; HEATMAP EDITION 🌴🚲</title>
 
   <!-- Google Fonts: Space Grotesk & JetBrains Mono -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -74,6 +74,11 @@
       color: #111827;
       min-height: 100vh;
       font-family: 'Space Grotesk', sans-serif;
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      padding-left: env(safe-area-inset-left, 0px);
+      padding-right: env(safe-area-inset-right, 0px);
+      -webkit-tap-highlight-color: transparent;
     }
 
     /* Chunky Neo-brutalist buttons & cards */
@@ -2771,8 +2776,30 @@
       return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
     }
 
+    function setupCapacitorIntegration() {
+      // Gestion native du bouton retour Android
+      if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App) {
+        window.Capacitor.Plugins.App.addListener('backButton', ({ canGoBack }) => {
+          const modals = ['modalDayEdit', 'modalPreferences', 'modalExport', 'modalAuth'];
+          for (const id of modals) {
+            const el = document.getElementById(id);
+            if (el && !el.classList.contains('hidden')) {
+              el.classList.add('hidden');
+              return;
+            }
+          }
+          if (canGoBack) {
+            window.history.back();
+          } else {
+            window.Capacitor.Plugins.App.exitApp();
+          }
+        });
+      }
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
       initApp();
+      setupCapacitorIntegration();
     });
   </script>
 </body>

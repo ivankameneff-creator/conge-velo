@@ -14,4 +14,21 @@ desktop.ini
 # Supabase local config (not committed to avoid leaking local credentials in public repos)
 supabase-config.js
 
+# Node
+node_modules/
+npm-debug.log*
+
+# Capacitor web build
+www/
+
+# Android build outputs & local config
+.gradle/
+android/.gradle/
+android/app/build/
+android/build/
+android/local.properties
+android/app/src/main/assets/public/
+android/app/src/main/assets/capacitor.config.json
+android/app/src/main/assets/capacitor.plugins.json
+
 PSTranscripts/
