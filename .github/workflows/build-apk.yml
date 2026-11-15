@@ -69,8 +69,9 @@ jobs:
         run: |
           echo "sdk.dir=$ANDROID_HOME" > android/local.properties
           cat android/local.properties
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" "build-tools;35.0.0"
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
-          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-35" "build-tools;35.0.0"
+          ls -la $ANDROID_HOME/platforms
 
       - name: Compiler l'APK Android (Debug)
         run: |
@@ -81,11 +82,13 @@ jobs:
             echo "Gradle build réussi !"
           else
             status=$?
-            echo "::error title=Gradle Failed::La compilation Gradle a échoué avec le code $status"
-            echo "### ❌ Échec de la compilation Gradle" >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            grep -E "(FAILURE:|What went wrong|Caused by:|compileSdk|AAPT|error:)" -A 10 -B 2 ../gradle-build.log | head -n 35 >> $GITHUB_STEP_SUMMARY || tail -n 35 ../gradle-build.log >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
+            echo "::error title=BuildFailed::Gradle build a echoue avec le code $status"
+            grep -A 8 "What went wrong:" ../gradle-build.log | head -n 8 | while IFS= read -r line; do
+              echo "::error title=GradleFailure::$line"
+            done
+            grep -E "Caused by:|compileSdk|SDK location|License not accepted" ../gradle-build.log | head -n 4 | while IFS= read -r line; do
+              echo "::error title=GradleRootCause::$line"
+            done
             exit $status
           fi
 
