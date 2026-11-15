@@ -7,6 +7,7 @@ on:
       - 'index.html'
       - 'package.json'
       - 'capacitor.config.json'
+      - 'scripts/**'
       - 'android/**'
       - '.github/workflows/build-apk.yml'
   workflow_dispatch:
@@ -30,6 +31,9 @@ jobs:
           java-version: '21'
           cache: 'gradle'
 
+      - name: Configurer Android SDK
+        uses: android-actions/setup-android@v3
+
       - name: Configurer Node.js
         uses: actions/setup-node@v4
         with:
@@ -45,26 +49,22 @@ jobs:
           SUPABASE_KEY: ${{ vars.SUPABASE_ANON_KEY || secrets.SUPABASE_ANON_KEY }}
           APP_PWD: ${{ secrets.APP_PASSWORD || vars.APP_PASSWORD }}
         run: |
-          AUTH_HASH=""
-          if [ -n "$APP_PWD" ]; then
-            AUTH_HASH=$(echo -n "$APP_PWD" | sha256sum | awk '{print $1}')
-          fi
+          node -e "
+            const crypto = require('crypto');
+            const fs = require('fs');
+            const pwd = process.env.APP_PWD || '';
+            const authHash = pwd ? crypto.createHash('sha256').update(pwd).digest('hex') : '';
+            const cfg = {
+              url: process.env.SUPABASE_URL || '',
+              anonKey: process.env.SUPABASE_KEY || '',
+              authHash: authHash
+            };
+            fs.writeFileSync('supabase-config.js', 'window.ZENLEAVE_SUPABASE_CONFIG = ' + JSON.stringify(cfg, null, 2) + ';\n');
+            console.log('supabase-config.js généré avec succès.');
+          "
 
-          echo "Génération de supabase-config.js..."
-          cat <<EOF > supabase-config.js
-          // Fichier généré automatiquement pour l'APK Android
-          window.ZENLEAVE_SUPABASE_CONFIG = {
-            url: "${SUPABASE_URL}",
-            anonKey: "${SUPABASE_KEY}",
-            authHash: "${AUTH_HASH}"
-          };
-          EOF
-
-      - name: Synchroniser Capacitor avec l'application web
+      - name: Préparer les assets et synchroniser Capacitor
         run: npm run cap:sync
-
-      - name: Configurer Android SDK
-        uses: android-actions/setup-android@v3
 
       - name: Compiler l'APK Android (Debug)
         run: |
