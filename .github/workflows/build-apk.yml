@@ -73,27 +73,13 @@ jobs:
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug --stacktrace --no-daemon 2>&1 | tee ../gradle-build.log
+          ./gradlew assembleDebug --stacktrace --no-daemon
 
-      - name: Sauvegarder le log en cas d'échec
-        if: failure()
-        run: |
-          echo "### Log d'échec Gradle" >> $GITHUB_STEP_SUMMARY
-          echo '```text' >> $GITHUB_STEP_SUMMARY
-          tail -n 120 gradle-build.log >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-
-      - name: Téléverser le log Gradle en artefact en cas d'erreur
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: gradle-build-log
-          path: gradle-build.log
-
-      - name: Renommer et préparer l'APK
+      - name: Préparer le fichier APK
         run: |
           mkdir -p build-output
-          cp android/app/build/outputs/apk/debug/app-debug.apk build-output/Conges-et-Velo-v1.0.apk
+          find android/app/build/outputs -name "*.apk" -exec cp {} build-output/Conges-et-Velo-v1.0.apk \;
+          ls -la build-output/
 
       - name: Mettre à disposition l'APK en téléchargement (Artifact GitHub Actions)
         uses: actions/upload-artifact@v4
