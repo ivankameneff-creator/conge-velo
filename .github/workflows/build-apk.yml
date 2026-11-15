@@ -34,7 +34,7 @@ jobs:
       - name: Configurer Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
 
       - name: Installer les dépendances npm
@@ -65,7 +65,7 @@ jobs:
           node scripts/prepare-mobile.js
           ls -la android/app/src/main/assets/public
 
-      - name: Configurer les licences et le chemin du SDK Android
+      - name: Configurer le SDK Android et accepter les licences
         run: |
           echo "sdk.dir=$ANDROID_HOME" > android/local.properties
           cat android/local.properties
@@ -79,19 +79,11 @@ jobs:
           status=${PIPESTATUS[0]}
           if [ $status -ne 0 ]; then
             echo "::error::Gradle build failed with status $status"
-            echo "### Erreur de compilation Gradle :" >> $GITHUB_STEP_SUMMARY
-            echo '```text' >> $GITHUB_STEP_SUMMARY
-            tail -n 80 ../gradle-build.log >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
+            tail -n 25 ../gradle-build.log | while IFS= read -r line; do
+              echo "::error title=Gradle::$line"
+            done
             exit $status
           fi
-
-      - name: Téléverser le log Gradle en cas d'erreur
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: gradle-build-log
-          path: gradle-build.log
 
       - name: Préparer le fichier APK
         run: |
