@@ -1,6 +1,6 @@
 {
   "appId": "fr.zenleave.congevelo",
-  "appName": "Congés & Vélo",
+  "appName": "Conges et Velo",
   "webDir": "www",
   "server": {
     "androidScheme": "https"

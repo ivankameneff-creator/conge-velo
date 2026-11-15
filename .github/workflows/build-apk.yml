@@ -24,9 +24,6 @@ jobs:
       - name: Checkout du dépôt
         uses: actions/checkout@v4
 
-      - name: Donner les permissions d'exécution à gradlew
-        run: chmod +x android/gradlew
-
       - name: Configurer Java 21
         uses: actions/setup-java@v4
         with:
@@ -63,15 +60,20 @@ jobs:
             console.log('supabase-config.js généré avec succès.');
           "
 
-      - name: Préparer les assets et copier dans Android
+      - name: Préparer le dossier www
         run: |
-          npm run build
-          npx cap copy android
-          npx cap update android || true
+          node scripts/prepare-mobile.js
+          ls -la www
+
+      - name: Copier les assets web dans Android
+        run: |
+          mkdir -p android/app/src/main/assets/public
+          npx cap copy android --verbose
 
       - name: Compiler l'APK Android (Debug)
         run: |
           cd android
+          chmod +x gradlew
           ./gradlew assembleDebug --stacktrace --no-daemon
 
       - name: Renommer et préparer l'APK
