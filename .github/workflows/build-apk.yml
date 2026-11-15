@@ -104,3 +104,23 @@ jobs:
           name: Conges-et-Velo-Android-APK
           path: build-output/Conges-et-Velo-v1.0.apk
           retention-days: 30
+
+      - name: Publier la Release GitHub avec l'APK
+        uses: softprops/action-gh-release@v2
+        if: github.ref == 'refs/heads/main'
+        with:
+          tag_name: mobile-latest
+          name: "Congés & Vélo v1.0 (Android APK)"
+          body: |
+            ### 📱 Application Android Congés & Vélo (v1.0)
+            
+            Téléchargez le fichier `Conges-et-Velo-v1.0.apk` ci-dessous directement sur votre smartphone Android pour l'installer.
+            
+            - **Package :** `fr.zenleave.congevelo`
+            - **Application :** Congés & Vélo
+            - **Synchronisation :** Supabase Cloud intégrée
+          files: build-output/Conges-et-Velo-v1.0.apk
+          prerelease: false
+          make_latest: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
