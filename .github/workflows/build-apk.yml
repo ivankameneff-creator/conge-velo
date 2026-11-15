@@ -31,9 +31,6 @@ jobs:
           java-version: '21'
           cache: 'gradle'
 
-      - name: Configurer Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Configurer Node.js
         uses: actions/setup-node@v4
         with:
@@ -65,6 +62,10 @@ jobs:
 
       - name: Préparer les assets et synchroniser Capacitor
         run: npm run cap:sync
+
+      - name: Accepter les licences Android SDK
+        run: |
+          yes | sdkmanager --licenses || true
 
       - name: Compiler l'APK Android (Debug)
         run: |
