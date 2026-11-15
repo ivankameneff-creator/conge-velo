@@ -65,15 +65,33 @@ jobs:
           node scripts/prepare-mobile.js
           ls -la android/app/src/main/assets/public
 
-      - name: Accepter les licences Android SDK
+      - name: Configurer les licences et le chemin du SDK Android
         run: |
+          echo "sdk.dir=$ANDROID_HOME" > android/local.properties
+          cat android/local.properties
           yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
 
       - name: Compiler l'APK Android (Debug)
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug --stacktrace --no-daemon
+          ./gradlew assembleDebug --stacktrace --no-daemon 2>&1 | tee ../gradle-build.log
+          status=${PIPESTATUS[0]}
+          if [ $status -ne 0 ]; then
+            echo "::error::Gradle build failed with status $status"
+            echo "### Erreur de compilation Gradle :" >> $GITHUB_STEP_SUMMARY
+            echo '```text' >> $GITHUB_STEP_SUMMARY
+            tail -n 80 ../gradle-build.log >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            exit $status
+          fi
+
+      - name: Téléverser le log Gradle en cas d'erreur
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gradle-build-log
+          path: gradle-build.log
 
       - name: Préparer le fichier APK
         run: |
