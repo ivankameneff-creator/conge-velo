@@ -60,15 +60,10 @@ jobs:
             console.log('supabase-config.js généré avec succès.');
           "
 
-      - name: Préparer le dossier www
+      - name: Préparer et synchroniser les assets mobiles
         run: |
           node scripts/prepare-mobile.js
-          ls -la www
-
-      - name: Copier les assets web dans Android
-        run: |
-          mkdir -p android/app/src/main/assets/public
-          npx cap copy android --verbose
+          ls -la android/app/src/main/assets/public
 
       - name: Compiler l'APK Android (Debug)
         run: |
