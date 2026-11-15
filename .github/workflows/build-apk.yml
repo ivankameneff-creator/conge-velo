@@ -65,11 +65,30 @@ jobs:
           node scripts/prepare-mobile.js
           ls -la android/app/src/main/assets/public
 
+      - name: Accepter les licences Android SDK
+        run: |
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+
       - name: Compiler l'APK Android (Debug)
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug --stacktrace --no-daemon
+          ./gradlew assembleDebug --stacktrace --no-daemon 2>&1 | tee ../gradle-build.log
+
+      - name: Sauvegarder le log en cas d'échec
+        if: failure()
+        run: |
+          echo "### Log d'échec Gradle" >> $GITHUB_STEP_SUMMARY
+          echo '```text' >> $GITHUB_STEP_SUMMARY
+          tail -n 120 gradle-build.log >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Téléverser le log Gradle en artefact en cas d'erreur
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gradle-build-log
+          path: gradle-build.log
 
       - name: Renommer et préparer l'APK
         run: |
