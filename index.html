@@ -157,6 +157,33 @@
       box-shadow: 1px 1px 0px #111827 !important;
     }
 
+    /* Mobile Single-Screen Compact View */
+    #mobileAppContainer {
+      padding-top: max(8px, env(safe-area-inset-top, 8px));
+      padding-bottom: max(8px, env(safe-area-inset-bottom, 8px));
+      padding-left: max(8px, env(safe-area-inset-left, 8px));
+      padding-right: max(8px, env(safe-area-inset-right, 8px));
+    }
+    .mobile-day-cell {
+      border: 2px solid #111827;
+      border-radius: 6px;
+      transition: transform 0.08s ease, background-color 0.12s ease;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    .mobile-day-cell:active {
+      transform: scale(0.95);
+    }
+    .mobile-tool-active {
+      background-color: #111827 !important;
+      color: #FFFFFF !important;
+      box-shadow: inset 2px 2px 0px rgba(0, 0, 0, 0.4) !important;
+      transform: translate(1px, 1px);
+    }
+    #mobileCalendarGrid {
+      touch-action: none;
+    }
+
     /* Tooltip */
     #heatmapTooltip {
       pointer-events: none;
@@ -168,6 +195,197 @@
 
   <!-- Heatmap Floating Tooltip -->
   <div id="heatmapTooltip" class="fixed hidden z-50 bg-pop-dark text-white px-3 py-1.5 border-2 border-pop-yellow shadow-brutal text-xs font-mono rounded"></div>
+
+  <!-- ========================================================================= -->
+  <!-- MOBILE DEDICATED COMPACT VIEW (100dvh, ZERO SCROLL, QUICK ACTION BAR)     -->
+  <!-- ========================================================================= -->
+  <div id="mobileAppContainer" class="hidden fixed inset-0 z-20 flex flex-col justify-between bg-pop-bg select-none overflow-hidden h-[100dvh]">
+    
+    <!-- Top Bar: Brand, Month Nav & Hamburger -->
+    <header class="flex items-center justify-between gap-1.5 px-2.5 py-1.5 bg-pop-cream border-2 border-pop-dark rounded-xl shadow-brutal-sm flex-shrink-0">
+      <div class="flex items-center gap-1.5">
+        <span class="text-xl">🌴</span>
+        <span class="font-black text-xs sm:text-sm uppercase tracking-tight">ZENLEAVE</span>
+      </div>
+
+      <!-- Month Controls -->
+      <div class="flex items-center gap-1 font-bold">
+        <button onclick="changeMonth(-1)" class="w-8 h-8 flex items-center justify-center brutal-btn bg-white rounded-lg text-xs" aria-label="Mois précédent">
+          ◀
+        </button>
+        <button onclick="goToToday()" id="mobileMonthYearBtn" class="px-2 py-1 bg-white border-2 border-pop-dark rounded-lg text-xs font-black shadow-brutal-sm flex items-center gap-1" title="Revenir au mois actuel">
+          <span id="mobileMonthYearLabel">Février 2026</span>
+        </button>
+        <button onclick="changeMonth(1)" class="w-8 h-8 flex items-center justify-center brutal-btn bg-white rounded-lg text-xs" aria-label="Mois suivant">
+          ▶
+        </button>
+      </div>
+
+      <!-- Hamburger Menu Drawer Trigger -->
+      <button onclick="openMobileDrawer()" class="w-8 h-8 flex items-center justify-center brutal-btn bg-pop-yellow rounded-lg text-base font-black" title="Menu et options">
+        ☰
+      </button>
+    </header>
+
+    <!-- Mini KPI Ticker Bar -->
+    <div class="flex items-center justify-around bg-white border-2 border-pop-dark rounded-xl px-2 py-1 my-1 shadow-brutal-sm text-[11px] font-bold flex-shrink-0">
+      <div class="flex items-center gap-1">
+        <span class="w-2.5 h-2.5 rounded-full bg-pop-cyan border border-pop-dark inline-block"></span>
+        <span>CP: <strong id="mobileKpiCp">0</strong>j</span>
+      </div>
+      <div class="h-3 w-[1.5px] bg-pop-dark/30"></div>
+      <div class="flex items-center gap-1">
+        <span class="w-2.5 h-2.5 rounded-full bg-pop-lime border border-pop-dark inline-block"></span>
+        <span>RTT: <strong id="mobileKpiRtt">0</strong>j</span>
+      </div>
+      <div class="h-3 w-[1.5px] bg-pop-dark/30"></div>
+      <div class="flex items-center gap-1">
+        <span>🚲 Mois: <strong id="mobileKpiVeloMonth">0</strong>j</span>
+      </div>
+    </div>
+
+    <!-- Weekdays Header Row -->
+    <div class="grid grid-cols-7 gap-1 text-center font-mono text-[10px] font-black uppercase text-slate-700 mb-0.5 px-0.5 flex-shrink-0">
+      <div>Lun</div>
+      <div>Mar</div>
+      <div>Mer</div>
+      <div>Jeu</div>
+      <div>Ven</div>
+      <div class="text-pop-coral">Sam</div>
+      <div class="text-pop-coral">Dim</div>
+    </div>
+
+    <!-- 7x6 Calendar Grid (Fills exact remaining vertical space) -->
+    <div id="mobileCalendarGrid" class="flex-1 min-h-0 grid grid-cols-7 grid-rows-6 gap-1 overflow-hidden transition-all duration-150">
+      <!-- Cells generated dynamically by renderMobileMonth() -->
+    </div>
+
+    <!-- Bottom Thumb-Friendly Quick Action Toolbar -->
+    <nav class="flex items-center justify-between gap-1 p-1 bg-pop-cream border-2 border-pop-dark rounded-xl shadow-brutal-sm mt-1 flex-shrink-0">
+      <button onclick="setMobileQuickTool('VELO')" id="mToolVelo" class="flex-1 py-1 px-1 brutal-btn bg-pop-yellow rounded-lg text-center flex flex-col items-center justify-center mobile-tool-active" title="Basculer trajet Vélo">
+        <span class="text-base leading-none">🚲</span>
+        <span class="text-[10px] font-black uppercase mt-0.5">Vélo</span>
+      </button>
+      <button onclick="setMobileQuickTool('CP')" id="mToolCp" class="flex-1 py-1 px-1 brutal-btn bg-pop-cyan rounded-lg text-center flex flex-col items-center justify-center" title="Poser / Retirer CP">
+        <span class="text-base leading-none">🌴</span>
+        <span class="text-[10px] font-black uppercase mt-0.5">CP</span>
+      </button>
+      <button onclick="setMobileQuickTool('RTT')" id="mToolRtt" class="flex-1 py-1 px-1 brutal-btn bg-pop-lime rounded-lg text-center flex flex-col items-center justify-center" title="Poser / Retirer RTT">
+        <span class="text-base leading-none">⚡</span>
+        <span class="text-[10px] font-black uppercase mt-0.5">RTT</span>
+      </button>
+      <button onclick="setMobileQuickTool('FICHE')" id="mToolFiche" class="flex-1 py-1 px-1 brutal-btn bg-white rounded-lg text-center flex flex-col items-center justify-center" title="Ouvrir la fiche détaillée">
+        <span class="text-base leading-none">📝</span>
+        <span class="text-[10px] font-black uppercase mt-0.5">Fiche</span>
+      </button>
+      <button onclick="setMobileQuickTool('CLEAR')" id="mToolClear" class="flex-1 py-1 px-1 brutal-btn bg-pop-coral text-white rounded-lg text-center flex flex-col items-center justify-center" title="Réinitialiser le jour">
+        <span class="text-base leading-none">🧹</span>
+        <span class="text-[10px] font-black uppercase mt-0.5">Effacer</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MOBILE DRAWER MENU                                                        -->
+  <!-- ========================================================================= -->
+  <div id="mobileDrawer" class="hidden fixed inset-0 z-40 flex justify-end">
+    <!-- Overlay Backdrop -->
+    <div onclick="closeMobileDrawer()" class="absolute inset-0 bg-pop-dark/60 backdrop-blur-xs transition-opacity"></div>
+    
+    <!-- Drawer Panel -->
+    <aside class="relative w-72 max-w-[85vw] h-full bg-pop-cream border-l-4 border-pop-dark p-4 flex flex-col justify-between shadow-2xl overflow-y-auto">
+      <div class="space-y-4">
+        <!-- Drawer Header -->
+        <div class="flex items-center justify-between pb-3 border-b-2 border-pop-dark">
+          <div class="flex items-center gap-2">
+            <span class="text-2xl">🌴</span>
+            <div>
+              <h2 class="font-black text-sm uppercase">Menu Zenleave</h2>
+              <span class="text-[10px] font-mono text-slate-600">Congés & Vélo</span>
+            </div>
+          </div>
+          <button onclick="closeMobileDrawer()" class="w-8 h-8 flex items-center justify-center brutal-btn bg-white rounded-lg text-sm font-bold" title="Fermer">
+            ✕
+          </button>
+        </div>
+
+        <!-- Menu Navigation Items -->
+        <div class="space-y-2 font-bold text-xs">
+          <button onclick="closeMobileDrawer(); openExportModal();" class="w-full brutal-btn bg-pop-lime p-2.5 rounded-xl flex items-center gap-2.5 text-left text-pop-dark">
+            <span class="text-xl">🚲</span>
+            <div>
+              <div class="font-black">Bilan Vélo (PDF / XLS)</div>
+              <div class="text-[10px] font-normal opacity-80">Attestation kilométrique</div>
+            </div>
+          </button>
+
+          <button onclick="closeMobileDrawer(); openPreferencesModal();" class="w-full brutal-btn bg-pop-purple p-2.5 rounded-xl flex items-center gap-2.5 text-left text-white">
+            <span class="text-xl">⚙️</span>
+            <div>
+              <div class="font-black">Mes Soldes</div>
+              <div class="text-[10px] font-normal opacity-80">Quotas CP, RTT & km/jour</div>
+            </div>
+          </button>
+
+          <button onclick="switchToDesktopViewAnd('HEATMAP')" class="w-full brutal-btn bg-pop-yellow p-2.5 rounded-xl flex items-center gap-2.5 text-left text-pop-dark">
+            <span class="text-xl">📊</span>
+            <div>
+              <div class="font-black">Heatmap 365 jours</div>
+              <div class="text-[10px] font-normal opacity-80">Vue annuelle complète</div>
+            </div>
+          </button>
+
+          <button onclick="switchToDesktopViewAnd('TIMELINE')" class="w-full brutal-btn bg-pop-cyan p-2.5 rounded-xl flex items-center gap-2.5 text-left text-pop-dark">
+            <span class="text-xl">📈</span>
+            <div>
+              <div class="font-black">Frise Chronologique</div>
+              <div class="text-[10px] font-normal opacity-80">Historique des congés</div>
+            </div>
+          </button>
+
+          <div class="pt-1 border-t-2 border-pop-dark/20"></div>
+
+          <!-- User Authentication Section -->
+          <div id="mobileAuthSection">
+            <button onclick="closeMobileDrawer(); openAuthModal();" id="mobileBtnAuth" class="w-full brutal-btn bg-pop-pink text-white p-2.5 rounded-xl flex items-center gap-2.5 text-left">
+              <span class="text-xl">👤</span>
+              <div>
+                <div class="font-black">Connexion Compte</div>
+                <div class="text-[10px] font-normal opacity-90">Synchroniser Supabase</div>
+              </div>
+            </button>
+            <div id="mobileUserPill" class="hidden brutal-box bg-white p-2.5 rounded-xl text-left">
+              <div class="flex items-center gap-1.5 mb-1.5">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>
+                <span class="text-[11px] font-mono font-bold truncate max-w-[190px]" id="mobileUserEmail">user@mail.com</span>
+              </div>
+              <button onclick="handleSignOut(); closeMobileDrawer();" class="brutal-btn bg-rose-500 text-white w-full py-1 text-[10px] font-black rounded">
+                Déconnexion
+              </button>
+            </div>
+          </div>
+
+          <div class="pt-1 border-t-2 border-pop-dark/20"></div>
+
+          <!-- Switch to Desktop View -->
+          <button onclick="toggleMobileMode(false)" class="w-full brutal-btn bg-white p-2.5 rounded-xl flex items-center gap-2.5 text-left text-pop-dark">
+            <span class="text-xl">💻</span>
+            <div>
+              <div class="font-black">Vue Complète (Bureau)</div>
+              <div class="text-[10px] font-normal opacity-80">Afficher l'interface PC</div>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Drawer Footer -->
+      <div class="pt-3 border-t-2 border-pop-dark text-center">
+        <span class="sticker-badge bg-pop-cyan text-[10px]">Android APK v1.2</span>
+        <p class="text-[9px] font-mono text-slate-500 mt-1">Glissez horizontalement pour changer de mois</p>
+      </div>
+    </aside>
+  </div>
 
   <div id="mainAppContainer" class="max-w-7xl mx-auto space-y-6 transition duration-200">
 
@@ -229,6 +447,12 @@
           <button onclick="toggleQuickPaintBar()" id="btnQuickPaintTrigger" class="brutal-btn bg-pop-yellow px-3 py-2 rounded-xl text-xs flex items-center gap-1.5 text-pop-dark">
             <i data-lucide="brush" class="w-4 h-4"></i>
             <span class="hidden sm:inline">Pinceau Rapide</span>
+          </button>
+
+          <!-- Mobile Mode Toggle Button -->
+          <button onclick="toggleMobileMode(true)" class="brutal-btn bg-pop-cyan px-3 py-2 rounded-xl text-xs flex items-center gap-1.5 text-pop-dark font-bold" title="Passer en vue mobile compacte (Mois)">
+            <span class="text-sm">📱</span>
+            <span>Vue Mobile (Mois)</span>
           </button>
 
           <!-- User Profile & Auth Trigger Buttons -->
@@ -1117,6 +1341,8 @@
       syncPreferencesFields();
       renderAllViews();
       updateKpis();
+      setupCalendarSwipeGestures();
+      applyMobileModeState();
       lucide.createIcons();
 
       // Initialiser la connexion Supabase PostgreSQL et vérifier la session active
@@ -1140,7 +1366,12 @@
       const btnAuth = document.getElementById('btnAuthTrigger');
       const emailLabel = document.getElementById('userEmailLabel');
       const container = document.getElementById('mainAppContainer');
+      const mobileContainer = document.getElementById('mobileAppContainer');
       const authModal = document.getElementById('modalAuth');
+
+      const mobBtnAuth = document.getElementById('mobileBtnAuth');
+      const mobUserPill = document.getElementById('mobileUserPill');
+      const mobEmail = document.getElementById('mobileUserEmail');
 
       if (currentUser) {
         if (pill) {
@@ -1152,7 +1383,12 @@
           emailLabel.textContent = currentUser.email || 'Utilisateur';
           emailLabel.title = currentUser.email || '';
         }
+        if (mobBtnAuth) mobBtnAuth.classList.add('hidden');
+        if (mobUserPill) mobUserPill.classList.remove('hidden');
+        if (mobEmail) mobEmail.textContent = currentUser.email || 'Utilisateur';
+
         if (container) container.classList.remove('filter', 'blur-md', 'pointer-events-none');
+        if (mobileContainer) mobileContainer.classList.remove('filter', 'blur-md', 'pointer-events-none');
         if (authModal) authModal.classList.add('hidden');
       } else {
         if (pill) {
@@ -1160,13 +1396,17 @@
           pill.classList.remove('flex');
         }
         if (btnAuth) btnAuth.classList.remove('hidden');
+        if (mobBtnAuth) mobBtnAuth.classList.remove('hidden');
+        if (mobUserPill) mobUserPill.classList.add('hidden');
 
         // Si la base Supabase est connectée / configurée, exiger la connexion utilisateur
         if (isDbConnected) {
           if (container) container.classList.add('filter', 'blur-md', 'pointer-events-none');
+          if (mobileContainer) mobileContainer.classList.add('filter', 'blur-md', 'pointer-events-none');
           if (authModal) authModal.classList.remove('hidden');
         } else {
           if (container) container.classList.remove('filter', 'blur-md', 'pointer-events-none');
+          if (mobileContainer) mobileContainer.classList.remove('filter', 'blur-md', 'pointer-events-none');
           if (authModal) authModal.classList.add('hidden');
         }
       }
@@ -1593,6 +1833,7 @@
       renderHeatmap();
       renderCalendar();
       renderTimeline();
+      renderMobileMonth();
     }
 
     // --- 1. RENDER HEATMAP 365 JOURS (WITH HALF-DAY SPLIT) ---
@@ -1862,12 +2103,14 @@
     function changeMonth(direction) {
       currentViewDate.setMonth(currentViewDate.getMonth() + direction);
       renderCalendar();
+      renderMobileMonth();
       updateKpis();
     }
 
     function goToToday() {
       currentViewDate = new Date();
       renderCalendar();
+      renderMobileMonth();
       updateKpis();
     }
 
@@ -2223,6 +2466,21 @@
       document.getElementById('kpiVeloDays').textContent = totalBikeDays;
       document.getElementById('kpiVeloKm').textContent = Math.round(totalBikeKm);
       document.getElementById('kpiVeloCo2').textContent = `${Math.round(co2Saved)} kg`;
+
+      // Mini KPI Ticker Mobile
+      let currentMonthBikeDays = 0;
+      const curMonthPrefix = `${currentViewDate.getFullYear()}-${String(currentViewDate.getMonth() + 1).padStart(2, '0')}`;
+      for (const [dateStr, day] of Object.entries(appData.days)) {
+        if (dateStr.startsWith(curMonthPrefix) && day.velo) {
+          currentMonthBikeDays += 1;
+        }
+      }
+      const mobCp = document.getElementById('mobileKpiCp');
+      if (mobCp) mobCp.textContent = cpRemaining % 1 === 0 ? cpRemaining : cpRemaining.toFixed(1);
+      const mobRtt = document.getElementById('mobileKpiRtt');
+      if (mobRtt) mobRtt.textContent = rttRemaining % 1 === 0 ? rttRemaining : rttRemaining.toFixed(1);
+      const mobVelo = document.getElementById('mobileKpiVeloMonth');
+      if (mobVelo) mobVelo.textContent = currentMonthBikeDays;
     }
 
     // --- EXPORTS MODAL & LOGIC ---
@@ -2776,10 +3034,313 @@
       return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
     }
 
+    // =========================================================================
+    // MOBILE DEDICATED COMPACT VIEW (100dvh, ZERO SCROLL, GESTURES & DRAWER)
+    // =========================================================================
+    let activeMobileTool = 'VELO'; // 'VELO' | 'CP' | 'RTT' | 'FICHE' | 'CLEAR'
+
+    function isMobileContext() {
+      const preferMobile = localStorage.getItem('zenleave_prefer_mobile');
+      if (preferMobile !== null) {
+        return preferMobile === '1';
+      }
+      const isCap = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+      return isCap || window.innerWidth < 768;
+    }
+
+    function toggleMobileMode(enable) {
+      localStorage.setItem('zenleave_prefer_mobile', enable ? '1' : '0');
+      applyMobileModeState();
+    }
+
+    function applyMobileModeState() {
+      const isMobile = isMobileContext();
+      const mobileContainer = document.getElementById('mobileAppContainer');
+      const desktopContainer = document.getElementById('mainAppContainer');
+
+      if (isMobile) {
+        if (mobileContainer) mobileContainer.classList.remove('hidden');
+        if (desktopContainer) desktopContainer.classList.add('hidden');
+        document.body.classList.add('overflow-hidden', '!p-0');
+        renderMobileMonth();
+      } else {
+        if (mobileContainer) mobileContainer.classList.add('hidden');
+        if (desktopContainer) desktopContainer.classList.remove('hidden');
+        document.body.classList.remove('overflow-hidden', '!p-0');
+        renderCalendar();
+      }
+    }
+
+    function openMobileDrawer() {
+      const drawer = document.getElementById('mobileDrawer');
+      if (drawer) drawer.classList.remove('hidden');
+    }
+
+    function closeMobileDrawer() {
+      const drawer = document.getElementById('mobileDrawer');
+      if (drawer) drawer.classList.add('hidden');
+    }
+
+    function switchToDesktopViewAnd(subView) {
+      closeMobileDrawer();
+      toggleMobileMode(false);
+      switchView(subView);
+    }
+
+    function setMobileQuickTool(tool) {
+      activeMobileTool = tool;
+      const toolMap = {
+        'VELO': 'mToolVelo',
+        'CP': 'mToolCp',
+        'RTT': 'mToolRtt',
+        'FICHE': 'mToolFiche',
+        'CLEAR': 'mToolClear'
+      };
+      Object.entries(toolMap).forEach(([t, btnId]) => {
+        const el = document.getElementById(btnId);
+        if (!el) return;
+        if (t === tool) {
+          el.classList.add('mobile-tool-active');
+        } else {
+          el.classList.remove('mobile-tool-active');
+        }
+      });
+    }
+
+    function handleMobileDayClick(dateKey) {
+      if (activeMobileTool === 'FICHE') {
+        openDayModal(dateKey);
+        return;
+      }
+
+      if (!appData.days[dateKey]) {
+        appData.days[dateKey] = { matin: 'TRAVAILLE', aprem: 'TRAVAILLE', velo: false, veloTrip: 'AR', note: '' };
+      }
+      const d = appData.days[dateKey];
+      const cur = getDayPeriods(d);
+
+      if (activeMobileTool === 'VELO') {
+        d.velo = !d.velo;
+        showToast(d.velo ? '🚲 Trajet Vélo ajouté' : 'Vélo retiré');
+      } else if (activeMobileTool === 'CP') {
+        if (cur.matin === 'CP' && cur.aprem === 'CP') {
+          d.matin = 'TRAVAILLE';
+          d.aprem = 'TRAVAILLE';
+          showToast('CP retiré');
+        } else {
+          d.matin = 'CP';
+          d.aprem = 'CP';
+          showToast('🌴 1j CP posé');
+        }
+      } else if (activeMobileTool === 'RTT') {
+        if (cur.matin === 'RTT' && cur.aprem === 'RTT') {
+          d.matin = 'TRAVAILLE';
+          d.aprem = 'TRAVAILLE';
+          showToast('RTT retiré');
+        } else {
+          d.matin = 'RTT';
+          d.aprem = 'RTT';
+          showToast('⚡ 1j RTT posé');
+        }
+      } else if (activeMobileTool === 'CLEAR') {
+        delete appData.days[dateKey];
+        showToast('🧹 Jour réinitialisé');
+      }
+
+      if (d && d.matin === 'TRAVAILLE' && d.aprem === 'TRAVAILLE' && !d.velo && !d.note) {
+        delete appData.days[dateKey];
+      }
+
+      saveAppData(dateKey);
+      renderAllViews();
+      updateKpis();
+    }
+
+    function renderMobileMonth() {
+      const year = currentViewDate.getFullYear();
+      const month = currentViewDate.getMonth();
+      const label = document.getElementById('mobileMonthYearLabel');
+      if (label) label.textContent = `${MONTH_NAMES[month]} ${year}`;
+
+      const holidays = getFrenchHolidays(year);
+      const grid = document.getElementById('mobileCalendarGrid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      const firstDayOfMonth = new Date(year, month, 1);
+      const startingDay = (firstDayOfMonth.getDay() + 6) % 7;
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const daysInPrevMonth = new Date(year, month, 0).getDate();
+
+      const today = new Date();
+      const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
+      const todayDate = today.getDate();
+
+      // Jours précédents du mois dernier
+      for (let i = startingDay - 1; i >= 0; i--) {
+        const d = daysInPrevMonth - i;
+        const cell = document.createElement('div');
+        cell.className = 'mobile-day-cell flex flex-col justify-between p-1 bg-slate-200/40 border border-dashed border-pop-dark/20 opacity-25 select-none text-slate-500';
+        cell.innerHTML = `<span class="text-[10px] font-bold font-mono">${d}</span>`;
+        cell.onclick = () => changeMonth(-1);
+        grid.appendChild(cell);
+      }
+
+      // Jours du mois en cours
+      for (let d = 1; d <= daysInMonth; d++) {
+        const dateKey = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        const dayOfWeek = (startingDay + (d - 1)) % 7;
+        const isWeekend = dayOfWeek === 5 || dayOfWeek === 6;
+        const isHoliday = holidays[dateKey];
+        const dayData = appData.days[dateKey];
+        const isToday = isCurrentMonth && d === todayDate;
+
+        const cell = document.createElement('div');
+        cell.className = `mobile-day-cell flex flex-col justify-between p-1 cursor-pointer select-none overflow-hidden relative ${
+          isWeekend ? 'bg-pop-gray/70' : 'bg-white'
+        } ${isToday ? 'ring-2 ring-pop-dark bg-pop-yellow/20' : ''}`;
+
+        cell.onclick = () => handleMobileDayClick(dateKey);
+
+        // Appui long (550ms) pour ouvrir directement la fiche détaillée du jour
+        let pressTimer = null;
+        cell.addEventListener('touchstart', () => {
+          pressTimer = setTimeout(() => {
+            openDayModal(dateKey);
+          }, 550);
+        }, { passive: true });
+        cell.addEventListener('touchend', () => clearTimeout(pressTimer), { passive: true });
+        cell.addEventListener('touchmove', () => clearTimeout(pressTimer), { passive: true });
+
+        // En-tête de case : Jour et badge Vélo / Férié
+        let topHtml = `
+          <div class="flex items-center justify-between w-full leading-none">
+            <span class="text-[11px] font-black font-mono ${isToday ? 'bg-pop-yellow px-1 rounded border border-pop-dark text-pop-dark' : (isHoliday ? 'text-rose-600' : 'text-pop-dark')}">
+              ${d}
+            </span>
+            <div class="flex items-center gap-0.5">
+              ${dayData && dayData.velo ? `<span class="text-[12px] leading-none" title="Vélo">🚲</span>` : ''}
+              ${isHoliday ? `<span class="text-[10px] leading-none text-rose-600" title="${isHoliday}">🎉</span>` : ''}
+            </div>
+          </div>
+        `;
+
+        // Badge central : Congé (CP, RTT...) ou note
+        const periods = getDayPeriods(dayData);
+        let badgeHtml = '';
+
+        if (periods.matin !== 'TRAVAILLE' || periods.aprem !== 'TRAVAILLE') {
+          if (periods.matin === periods.aprem) {
+            // Jour entier
+            const badgeColor = {
+              'CP': 'bg-pop-cyan text-pop-dark',
+              'RTT': 'bg-pop-lime text-pop-dark',
+              'ANCIENNETE': 'bg-pop-purple text-white',
+              'SANS_SOLDE': 'bg-pop-coral text-white',
+              'MALADIE': 'bg-pop-orange text-pop-dark'
+            }[periods.matin] || 'bg-slate-200 text-pop-dark';
+            badgeHtml = `<div class="${badgeColor} border border-pop-dark rounded px-0.5 text-[9px] font-black text-center leading-tight truncate my-auto">${periods.matin}</div>`;
+          } else {
+            // Demi-journée
+            const mBadge = periods.matin !== 'TRAVAILLE' ? `½${periods.matin}` : '💼';
+            const aBadge = periods.aprem !== 'TRAVAILLE' ? `½${periods.aprem}` : '💼';
+            badgeHtml = `
+              <div class="flex gap-0.5 w-full my-auto text-[8px] font-bold text-center leading-tight">
+                <span class="flex-1 bg-pop-cyan/60 rounded truncate">${mBadge}</span>
+                <span class="flex-1 bg-pop-lime/60 rounded truncate">${aBadge}</span>
+              </div>
+            `;
+          }
+        } else if (dayData && dayData.note) {
+          badgeHtml = `<div class="text-[8px] text-slate-500 font-mono truncate italic my-auto">📝</div>`;
+        }
+
+        cell.innerHTML = topHtml + badgeHtml;
+        grid.appendChild(cell);
+      }
+
+      // Compléter à 42 cases exactement (grille 7x6 toujours stable)
+      const totalCells = startingDay + daysInMonth;
+      const remainder = 42 - totalCells;
+      for (let nextDay = 1; nextDay <= remainder; nextDay++) {
+        const cell = document.createElement('div');
+        cell.className = 'mobile-day-cell flex flex-col justify-between p-1 bg-slate-200/40 border border-dashed border-pop-dark/20 opacity-25 select-none text-slate-500';
+        cell.innerHTML = `<span class="text-[10px] font-bold font-mono">${nextDay}</span>`;
+        cell.onclick = () => changeMonth(1);
+        grid.appendChild(cell);
+      }
+    }
+
+    function setupCalendarSwipeGestures() {
+      const grid = document.getElementById('mobileCalendarGrid');
+      if (!grid) return;
+
+      let touchStartX = 0;
+      let touchStartY = 0;
+      let touchStartTime = 0;
+
+      grid.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 1) {
+          touchStartX = e.touches[0].clientX;
+          touchStartY = e.touches[0].clientY;
+          touchStartTime = Date.now();
+        }
+      }, { passive: true });
+
+      grid.addEventListener('touchend', (e) => {
+        if (e.changedTouches.length === 1) {
+          const endX = e.changedTouches[0].clientX;
+          const endY = e.changedTouches[0].clientY;
+          const diffX = endX - touchStartX;
+          const diffY = endY - touchStartY;
+          const elapsed = Date.now() - touchStartTime;
+
+          // Détecter un glissement horizontal : au moins 40px, sous 600ms, et principalement horizontal
+          if (elapsed < 600 && Math.abs(diffX) > 40 && Math.abs(diffX) > Math.abs(diffY) * 1.3) {
+            if (diffX < 0) {
+              // Glissement gauche -> mois suivant
+              animateMonthSlide('left', () => changeMonth(1));
+            } else {
+              // Glissement droite -> mois précédent
+              animateMonthSlide('right', () => changeMonth(-1));
+            }
+          }
+        }
+      }, { passive: true });
+    }
+
+    function animateMonthSlide(direction, callback) {
+      const grid = document.getElementById('mobileCalendarGrid');
+      if (!grid) {
+        callback();
+        return;
+      }
+      const outTranslate = direction === 'left' ? '-translate-x-5' : 'translate-x-5';
+      const inTranslate = direction === 'left' ? 'translate-x-5' : '-translate-x-5';
+
+      grid.classList.add('opacity-0', outTranslate);
+      setTimeout(() => {
+        callback();
+        grid.classList.remove(outTranslate);
+        grid.classList.add(inTranslate);
+        requestAnimationFrame(() => {
+          grid.classList.remove('opacity-0', inTranslate);
+        });
+      }, 110);
+    }
+
     function setupCapacitorIntegration() {
       // Gestion native du bouton retour Android
       if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.App) {
         window.Capacitor.Plugins.App.addListener('backButton', ({ canGoBack }) => {
+          // 1. Fermer le drawer mobile si ouvert
+          const drawer = document.getElementById('mobileDrawer');
+          if (drawer && !drawer.classList.contains('hidden')) {
+            closeMobileDrawer();
+            return;
+          }
+
+          // 2. Fermer les modaux s'ils sont ouverts
           const modals = ['modalDayEdit', 'modalPreferences', 'modalExport', 'modalAuth'];
           for (const id of modals) {
             const el = document.getElementById(id);
@@ -2788,6 +3349,7 @@
               return;
             }
           }
+
           if (canGoBack) {
             window.history.back();
           } else {
@@ -2800,6 +3362,12 @@
     window.addEventListener('DOMContentLoaded', () => {
       initApp();
       setupCapacitorIntegration();
+    });
+
+    window.addEventListener('resize', () => {
+      if (localStorage.getItem('zenleave_prefer_mobile') === null) {
+        applyMobileModeState();
+      }
     });
   </script>
 </body>
