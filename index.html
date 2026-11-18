@@ -200,9 +200,8 @@
   <!-- MOBILE DEDICATED COMPACT VIEW (100dvh, ZERO SCROLL, QUICK ACTION BAR)     -->
   <!-- ========================================================================= -->
   <div id="mobileAppContainer" class="hidden fixed inset-0 z-20 flex flex-col justify-between select-none overflow-hidden h-[100dvh]">
-    <!-- Dynamic Ecology Background & Translucent Veil -->
+    <!-- Dynamic Ecology Background -->
     <div id="mobileEcoBg" class="absolute inset-0 bg-cover bg-center transition-all duration-700 pointer-events-none -z-10" style="background-image: url('assets/backgrounds/pollution-heavy.webp');"></div>
-    <div id="mobileEcoVeil" class="absolute inset-0 bg-[#F8F5EC]/85 backdrop-blur-[1.5px] transition-colors duration-500 pointer-events-none -z-10"></div>
     
     <!-- Top Bar: Brand, Month Nav & Hamburger -->
     <header class="flex items-center justify-between gap-1.5 px-2.5 py-1.5 bg-pop-cream border-2 border-pop-dark rounded-xl shadow-brutal-sm flex-shrink-0">
@@ -249,7 +248,7 @@
     </div>
 
     <!-- Weekdays Header Row -->
-    <div class="grid grid-cols-7 gap-1 text-center font-mono text-[10px] font-black uppercase text-slate-700 mb-0.5 px-0.5 flex-shrink-0">
+    <div class="grid grid-cols-7 gap-1 text-center font-mono text-[10px] font-black uppercase bg-white/90 border border-pop-dark rounded-lg py-1 px-0.5 shadow-brutal-sm flex-shrink-0">
       <div>Lun</div>
       <div>Mar</div>
       <div>Mer</div>
@@ -732,9 +731,8 @@
 
     <!-- VUE B : CALENDRIER MENSUEL (POP EDITION) -->
     <div id="viewCalendarContainer" class="hidden relative overflow-hidden brutal-box-lg rounded-2xl p-4 sm:p-6">
-      <!-- Dynamic Ecology Background & Translucent Veil -->
+      <!-- Dynamic Ecology Background -->
       <div id="desktopEcoBg" class="absolute inset-0 bg-cover bg-center transition-all duration-700 pointer-events-none -z-10" style="background-image: url('assets/backgrounds/pollution-heavy.webp');"></div>
-      <div id="desktopEcoVeil" class="absolute inset-0 bg-[#F8F5EC]/85 backdrop-blur-[1.5px] transition-colors duration-500 pointer-events-none -z-10"></div>
       
       <!-- Calendar Nav -->
       <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pb-4 border-b-2 border-pop-dark mb-4">
@@ -760,7 +758,7 @@
         <div class="text-xs font-bold flex items-center gap-3">
           <span id="desktopEcoBadge" class="sticker-badge bg-rose-200 text-rose-950 font-black flex items-center gap-1">🌫️ &lt;10j : Pollution élevée</span>
           <span class="sticker-badge bg-white">CLIQUEZ POUR ÉDITER</span>
-          <span class="text-slate-600 hidden md:inline">Sélectionnez demi-journée Matin ou Aprem dans la fiche</span>
+          <span class="sticker-badge bg-white text-slate-700 hidden md:inline">Sélectionnez demi-journée Matin ou Aprem dans la fiche</span>
         </div>
 
       </div>
@@ -2495,11 +2493,10 @@
       updateMonthlyEcologyTheme(currentMonthBikeDays);
     }
 
-    // --- AMBIANCE ECOLOGIQUE DU MOIS (PHOTO DE FOND + VOILE TRANSLUCIDE) ---
+    // --- AMBIANCE ECOLOGIQUE DU MOIS (PHOTO DE FOND DYNAMIQUE) ---
     const MONTHLY_ECO_THEMES = {
       HEAVY_POLLUTION: {
         bgImage: 'assets/backgrounds/pollution-heavy.webp',
-        veilClass: 'bg-[#F8F5EC]/85 backdrop-blur-[1.5px]',
         badgeTextMobile: '🌫️ <10j',
         badgeTextDesktop: '🌫️ <10j : Pollution élevée',
         badgeClass: 'bg-rose-200 text-rose-950 border-pop-dark',
@@ -2507,7 +2504,6 @@
       },
       LIGHT_POLLUTION: {
         bgImage: 'assets/backgrounds/pollution-light.webp',
-        veilClass: 'bg-[#F8F5EC]/80 backdrop-blur-[1.5px]',
         badgeTextMobile: '⛅ 10-15j',
         badgeTextDesktop: '⛅ 10-15j : Pollution modérée',
         badgeClass: 'bg-amber-200 text-amber-950 border-pop-dark',
@@ -2515,7 +2511,6 @@
       },
       LUSH_NATURE: {
         bgImage: 'assets/backgrounds/nature-lush.webp',
-        veilClass: 'bg-[#F8F5EC]/75 backdrop-blur-[1.5px]',
         badgeTextMobile: '🌿 >15j',
         badgeTextDesktop: '🌿 >15j : Nature luxuriante !',
         badgeClass: 'bg-emerald-200 text-emerald-950 border-pop-dark',
@@ -2546,8 +2541,6 @@
       // Mise à jour vue Mobile
       const mobBg = document.getElementById('mobileEcoBg');
       if (mobBg) mobBg.style.backgroundImage = `url('${theme.bgImage}')`;
-      const mobVeil = document.getElementById('mobileEcoVeil');
-      if (mobVeil) mobVeil.className = `absolute inset-0 ${theme.veilClass} transition-colors duration-500 pointer-events-none -z-10`;
       const mobBadge = document.getElementById('mobileEcoBadge');
       if (mobBadge) {
         mobBadge.textContent = theme.badgeTextMobile;
@@ -2558,8 +2551,6 @@
       // Mise à jour vue Desktop
       const deskBg = document.getElementById('desktopEcoBg');
       if (deskBg) deskBg.style.backgroundImage = `url('${theme.bgImage}')`;
-      const deskVeil = document.getElementById('desktopEcoVeil');
-      if (deskVeil) deskVeil.className = `absolute inset-0 ${theme.veilClass} transition-colors duration-500 pointer-events-none -z-10`;
       const deskBadge = document.getElementById('desktopEcoBadge');
       if (deskBadge) {
         deskBadge.textContent = theme.badgeTextDesktop;
