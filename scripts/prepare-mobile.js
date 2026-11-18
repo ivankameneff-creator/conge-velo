@@ -35,6 +35,29 @@ fs.writeFileSync(path.join(androidPublicDir, 'supabase-config.js'), supabaseConf
 fs.writeFileSync(path.join(androidPublicDir, 'cordova.js'), '');
 fs.writeFileSync(path.join(androidPublicDir, 'cordova_plugins.js'), '');
 
+// 4b. Copier récursivement le dossier assets s'il existe
+function copyDirRecursive(src, dest) {
+  if (!fs.existsSync(src)) return;
+  if (!fs.existsSync(dest)) fs.mkdirSync(dest, { recursive: true });
+  const entries = fs.readdirSync(src, { withFileTypes: true });
+  for (const entry of entries) {
+    const srcPath = path.join(src, entry.name);
+    const destPath = path.join(dest, entry.name);
+    if (entry.isDirectory()) {
+      copyDirRecursive(srcPath, destPath);
+    } else {
+      fs.copyFileSync(srcPath, destPath);
+    }
+  }
+}
+
+const sourceAssetsDir = path.join(rootDir, 'assets');
+if (fs.existsSync(sourceAssetsDir)) {
+  copyDirRecursive(sourceAssetsDir, path.join(wwwDir, 'assets'));
+  copyDirRecursive(sourceAssetsDir, path.join(androidPublicDir, 'assets'));
+  console.log('🖼️ Dossier assets/ copié dans www/assets et android assets.');
+}
+
 // 5. Générer capacitor.config.json dans les assets Android
 const capConfig = {
   appId: "fr.zenleave.congevelo",

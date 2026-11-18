@@ -199,7 +199,10 @@
   <!-- ========================================================================= -->
   <!-- MOBILE DEDICATED COMPACT VIEW (100dvh, ZERO SCROLL, QUICK ACTION BAR)     -->
   <!-- ========================================================================= -->
-  <div id="mobileAppContainer" class="hidden fixed inset-0 z-20 flex flex-col justify-between bg-pop-bg select-none overflow-hidden h-[100dvh]">
+  <div id="mobileAppContainer" class="hidden fixed inset-0 z-20 flex flex-col justify-between select-none overflow-hidden h-[100dvh]">
+    <!-- Dynamic Ecology Background & Translucent Veil -->
+    <div id="mobileEcoBg" class="absolute inset-0 bg-cover bg-center transition-all duration-700 pointer-events-none -z-10" style="background-image: url('assets/backgrounds/pollution-heavy.webp');"></div>
+    <div id="mobileEcoVeil" class="absolute inset-0 bg-[#F8F5EC]/85 backdrop-blur-[1.5px] transition-colors duration-500 pointer-events-none -z-10"></div>
     
     <!-- Top Bar: Brand, Month Nav & Hamburger -->
     <header class="flex items-center justify-between gap-1.5 px-2.5 py-1.5 bg-pop-cream border-2 border-pop-dark rounded-xl shadow-brutal-sm flex-shrink-0">
@@ -228,7 +231,7 @@
     </header>
 
     <!-- Mini KPI Ticker Bar -->
-    <div class="flex items-center justify-around bg-white border-2 border-pop-dark rounded-xl px-2 py-1 my-1 shadow-brutal-sm text-[11px] font-bold flex-shrink-0">
+    <div class="flex items-center justify-around bg-white/95 border-2 border-pop-dark rounded-xl px-2 py-1 my-1 shadow-brutal-sm text-[11px] font-bold flex-shrink-0">
       <div class="flex items-center gap-1">
         <span class="w-2.5 h-2.5 rounded-full bg-pop-cyan border border-pop-dark inline-block"></span>
         <span>CP: <strong id="mobileKpiCp">0</strong>j</span>
@@ -239,8 +242,9 @@
         <span>RTT: <strong id="mobileKpiRtt">0</strong>j</span>
       </div>
       <div class="h-3 w-[1.5px] bg-pop-dark/30"></div>
-      <div class="flex items-center gap-1">
+      <div class="flex items-center gap-1" title="Trajets vélo du mois et ambiance écologique">
         <span>🚲 Mois: <strong id="mobileKpiVeloMonth">0</strong>j</span>
+        <span id="mobileEcoBadge" class="sticker-badge bg-rose-200 text-rose-950 border-pop-dark font-black text-[9px] py-0 px-1 ml-0.5">🌫️ &lt;10j</span>
       </div>
     </div>
 
@@ -727,7 +731,10 @@
     </div>
 
     <!-- VUE B : CALENDRIER MENSUEL (POP EDITION) -->
-    <div id="viewCalendarContainer" class="hidden bg-pop-cream brutal-box-lg rounded-2xl p-4 sm:p-6">
+    <div id="viewCalendarContainer" class="hidden relative overflow-hidden brutal-box-lg rounded-2xl p-4 sm:p-6">
+      <!-- Dynamic Ecology Background & Translucent Veil -->
+      <div id="desktopEcoBg" class="absolute inset-0 bg-cover bg-center transition-all duration-700 pointer-events-none -z-10" style="background-image: url('assets/backgrounds/pollution-heavy.webp');"></div>
+      <div id="desktopEcoVeil" class="absolute inset-0 bg-[#F8F5EC]/85 backdrop-blur-[1.5px] transition-colors duration-500 pointer-events-none -z-10"></div>
       
       <!-- Calendar Nav -->
       <div class="flex flex-col sm:flex-row items-center justify-between gap-4 pb-4 border-b-2 border-pop-dark mb-4">
@@ -751,8 +758,9 @@
         </div>
 
         <div class="text-xs font-bold flex items-center gap-3">
+          <span id="desktopEcoBadge" class="sticker-badge bg-rose-200 text-rose-950 font-black flex items-center gap-1">🌫️ &lt;10j : Pollution élevée</span>
           <span class="sticker-badge bg-white">CLIQUEZ POUR ÉDITER</span>
-          <span class="text-slate-600">Sélectionnez demi-journée Matin ou Aprem dans la fiche</span>
+          <span class="text-slate-600 hidden md:inline">Sélectionnez demi-journée Matin ou Aprem dans la fiche</span>
         </div>
 
       </div>
@@ -1998,6 +2006,7 @@
       const year = currentViewDate.getFullYear();
       const month = currentViewDate.getMonth();
       document.getElementById('currentMonthYearLabel').textContent = `${MONTH_NAMES[month]} ${year}`;
+      updateMonthlyEcologyTheme();
 
       const holidays = getFrenchHolidays(year);
       const grid = document.getElementById('calendarGrid');
@@ -2481,6 +2490,82 @@
       if (mobRtt) mobRtt.textContent = rttRemaining % 1 === 0 ? rttRemaining : rttRemaining.toFixed(1);
       const mobVelo = document.getElementById('mobileKpiVeloMonth');
       if (mobVelo) mobVelo.textContent = currentMonthBikeDays;
+
+      // Ambiance écologique dynamique selon les trajets vélo du mois affiché
+      updateMonthlyEcologyTheme(currentMonthBikeDays);
+    }
+
+    // --- AMBIANCE ECOLOGIQUE DU MOIS (PHOTO DE FOND + VOILE TRANSLUCIDE) ---
+    const MONTHLY_ECO_THEMES = {
+      HEAVY_POLLUTION: {
+        bgImage: 'assets/backgrounds/pollution-heavy.webp',
+        veilClass: 'bg-[#F8F5EC]/85 backdrop-blur-[1.5px]',
+        badgeTextMobile: '🌫️ <10j',
+        badgeTextDesktop: '🌫️ <10j : Pollution élevée',
+        badgeClass: 'bg-rose-200 text-rose-950 border-pop-dark',
+        title: 'Moins de 10 trajets vélo ce mois-ci : pollution élevée'
+      },
+      LIGHT_POLLUTION: {
+        bgImage: 'assets/backgrounds/pollution-light.webp',
+        veilClass: 'bg-[#F8F5EC]/80 backdrop-blur-[1.5px]',
+        badgeTextMobile: '⛅ 10-15j',
+        badgeTextDesktop: '⛅ 10-15j : Pollution modérée',
+        badgeClass: 'bg-amber-200 text-amber-950 border-pop-dark',
+        title: 'Entre 10 et 15 trajets vélo ce mois-ci : pollution modérée'
+      },
+      LUSH_NATURE: {
+        bgImage: 'assets/backgrounds/nature-lush.webp',
+        veilClass: 'bg-[#F8F5EC]/75 backdrop-blur-[1.5px]',
+        badgeTextMobile: '🌿 >15j',
+        badgeTextDesktop: '🌿 >15j : Nature luxuriante !',
+        badgeClass: 'bg-emerald-200 text-emerald-950 border-pop-dark',
+        title: 'Plus de 15 trajets vélo ce mois-ci : nature préservée !'
+      }
+    };
+
+    function updateMonthlyEcologyTheme(precomputedCount = null) {
+      let bikeDays = precomputedCount;
+      if (bikeDays === null || bikeDays === undefined) {
+        bikeDays = 0;
+        const curMonthPrefix = `${currentViewDate.getFullYear()}-${String(currentViewDate.getMonth() + 1).padStart(2, '0')}`;
+        for (const [dateStr, day] of Object.entries(appData.days)) {
+          if (dateStr.startsWith(curMonthPrefix) && day.velo) {
+            bikeDays += 1;
+          }
+        }
+      }
+
+      let themeKey = 'HEAVY_POLLUTION';
+      if (bikeDays > 15) {
+        themeKey = 'LUSH_NATURE';
+      } else if (bikeDays >= 10) {
+        themeKey = 'LIGHT_POLLUTION';
+      }
+      const theme = MONTHLY_ECO_THEMES[themeKey];
+
+      // Mise à jour vue Mobile
+      const mobBg = document.getElementById('mobileEcoBg');
+      if (mobBg) mobBg.style.backgroundImage = `url('${theme.bgImage}')`;
+      const mobVeil = document.getElementById('mobileEcoVeil');
+      if (mobVeil) mobVeil.className = `absolute inset-0 ${theme.veilClass} transition-colors duration-500 pointer-events-none -z-10`;
+      const mobBadge = document.getElementById('mobileEcoBadge');
+      if (mobBadge) {
+        mobBadge.textContent = theme.badgeTextMobile;
+        mobBadge.className = `sticker-badge ${theme.badgeClass} font-black text-[9px] py-0 px-1 ml-0.5`;
+        mobBadge.title = theme.title;
+      }
+
+      // Mise à jour vue Desktop
+      const deskBg = document.getElementById('desktopEcoBg');
+      if (deskBg) deskBg.style.backgroundImage = `url('${theme.bgImage}')`;
+      const deskVeil = document.getElementById('desktopEcoVeil');
+      if (deskVeil) deskVeil.className = `absolute inset-0 ${theme.veilClass} transition-colors duration-500 pointer-events-none -z-10`;
+      const deskBadge = document.getElementById('desktopEcoBadge');
+      if (deskBadge) {
+        deskBadge.textContent = theme.badgeTextDesktop;
+        deskBadge.className = `sticker-badge ${theme.badgeClass} font-black flex items-center gap-1`;
+        deskBadge.title = theme.title;
+      }
     }
 
     // --- EXPORTS MODAL & LOGIC ---
@@ -3161,6 +3246,7 @@
       const month = currentViewDate.getMonth();
       const label = document.getElementById('mobileMonthYearLabel');
       if (label) label.textContent = `${MONTH_NAMES[month]} ${year}`;
+      updateMonthlyEcologyTheme();
 
       const holidays = getFrenchHolidays(year);
       const grid = document.getElementById('mobileCalendarGrid');
